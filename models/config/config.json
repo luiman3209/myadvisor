@@ -1,0 +1,30 @@
+{
+  "development": {
+    "use_env_variable": "DATABASE_URL_LOCAL",
+    "dialect": "postgres",
+    "dialectOptions": {},
+    "define": {
+      "schema": "myadvisor"
+    }
+  },
+  "test": {
+    "username": "your_db_username",
+    "password": "your_db_password",
+    "database": "your_db_name",
+    "host": "127.0.0.1",
+    "dialect": "postgres"
+  },
+  "production": {
+    "use_env_variable": "DATABASE_URL",
+    "dialect": "postgres",
+    "dialectOptions": {
+      "ssl": {
+        "require": true,
+        "rejectUnauthorized": false
+      }
+    },
+    "define": {
+      "schema": "myadvisor"
+    }
+  }
+}
