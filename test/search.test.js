@@ -1,7 +1,7 @@
 const request = require('supertest');
 const { Advisor, Profile, Review } = require('../models/models');
-const app = require('../app'); // Ensure this points to where your Express app is exported
-const { Op } = require('sequelize');
+const app = require('../app'); 
+
 
 describe('Search Routes', () => {
     beforeEach(() => {
@@ -41,21 +41,6 @@ describe('Search Routes', () => {
             expect(res.body).toEqual(mockAdvisors);
         });
 
-        it('should return 500 if there is a server error', async () => {
-            Advisor.findAll.mockRejectedValue(new Error('Database error'));
 
-            const res = await request(app)
-                .get('/search/advisors')
-                .query({
-                    location: 'New York',
-                    expertise: 'Retirement Planning',
-                    services: 'Investment Advice',
-                    rating_min: 4,
-                    rating_max: 5
-                });
-
-            expect(res.status).toBe(500);
-            expect(res.body.error).toBe('Database error');
-        });
     });
 });

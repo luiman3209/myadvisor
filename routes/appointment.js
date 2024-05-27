@@ -51,10 +51,11 @@ router.post('/book', passport.authenticate('jwt', { session: false }), async (re
         res.json({
             message: 'Appointment booked successfully',
             appointment,
-            payment,
+            //payment,
             //clientSecret: paymentIntent.client_secret, // Return client secret for payment
         });
     } catch (error) {
+
         res.status(500).json({ error: error.message });
     }
 });
@@ -98,6 +99,7 @@ router.put('/:appointmentId/status', passport.authenticate('jwt', { session: fal
         await appointment.update({ status });
         res.json({ message: 'Appointment status updated successfully', appointment });
     } catch (error) {
+        
         res.status(500).json({ error: error.message });
     }
 });
@@ -116,7 +118,7 @@ router.get('/free-windows/:advisorId', async (req, res) => {
         const advisor = await Advisor.findByPk(advisorId);
 
         // Example working hours and appointment duration (in minutes)
-        const workingHours = {
+        let workingHours = {
             start: advisor.start_shift_1,
             end: advisor.start_shift_2,
         };
@@ -128,20 +130,21 @@ router.get('/free-windows/:advisorId', async (req, res) => {
         });
 
         // Calculate free time windows
-        const freeWindowsShift1 = calculateFreeWindows(appointments, workingHours, minFreeWindowDuration);
+        let freeWindowsShift1 = calculateFreeWindows(appointments, workingHours, minFreeWindowDuration);
 
         if (advisor.start_shift_2 && advisor.end_shift_2) {
             workingHours = {
                 start: advisor.start_shift_2,
                 end: advisor.end_shift_2,
             };
-            const freeWindowsShift2 = calculateFreeWindows(appointments, workingHours, minFreeWindowDuration);
+            let freeWindowsShift2 = calculateFreeWindows(appointments, workingHours, minFreeWindowDuration);
             res.json({ freeWindowsShift1: freeWindowsShift1, freeWindowsShift2: freeWindowsShift2 });
         }
 
         res.json({ freeWindowsShift1: freeWindowsShift1 });
 
     } catch (error) {
+        
         res.status(500).json({ error: error.message });
     }
 });

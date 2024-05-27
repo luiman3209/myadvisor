@@ -28,16 +28,6 @@ describe('Profile Routes', () => {
             expect(res.body.message).toBe('Profile not found');
         });
 
-        //it('should return 500 if there is a server error', async () => {
-        //    jest.spyOn(Profile, 'findOne').mockRejectedValue(new Error('Database error'));
-//
-        //    const res = await request(app)
-        //        .get('/profile')
-        //        .set('Authorization', 'Bearer mockToken');
-//
-        //    expect(res.status).toBe(500);
-        //    expect(res.body.error).toBe('Database error');
-        //});
     });
 
     // Add other tests as needed

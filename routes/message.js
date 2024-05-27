@@ -1,6 +1,7 @@
 const express = require('express');
 const passport = require('passport');
 const { Message, User, Advisor } = require('../models/models');
+const { Op } = require('sequelize');
 
 const router = express.Router();
 
@@ -27,7 +28,7 @@ router.get('/:receiver_id', passport.authenticate('jwt', { session: false }), as
     try {
         const { receiver_id } = req.params;
         const sender_id = req.user.id;
-
+        
         const messages = await Message.findAll({
             where: {
                 [Op.or]: [
