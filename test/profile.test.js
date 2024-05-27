@@ -1,72 +1,69 @@
-const chai = require('chai');
-const chaiHttp = require('chai-http');
-const sinon = require('sinon');
+const request = require('supertest');
 const { Profile } = require('../models/models');
 const app = require('../app'); // Ensure this points to where your Express app is exported
 const passport = require('passport');
-const expect = chai.expect;
 
-chai.use(chaiHttp);
+jest.mock('passport', () => ({
+    authenticate: jest.fn(),
+}));
 
 describe('Profile Routes', () => {
     beforeEach(() => {
-        sinon.stub(passport, 'authenticate').callsFake((strategy, options, callback) => {
+        passport.authenticate.mockImplementation((strategy, options, callback) => {
             return (req, res, next) => {
                 req.user = { id: 1 }; // Mock user
                 next();
             };
         });
 
-        sinon.stub(Profile, 'findOne');
-        sinon.stub(Profile, 'create');
+        jest.spyOn(Profile, 'findOne').mockResolvedValue();
+        jest.spyOn(Profile, 'create').mockResolvedValue();
     });
 
     afterEach(() => {
-        passport.authenticate.restore();
-        Profile.findOne.restore();
-        Profile.create.restore();
+        jest.restoreAllMocks();
     });
 
     describe('GET /profile', () => {
         it('should return the user profile', async () => {
             const mockProfile = { id: 1, user_id: 1, first_name: 'John', last_name: 'Doe' };
 
-            Profile.findOne.resolves(mockProfile);
+            Profile.findOne.mockResolvedValue(mockProfile);
 
-            const res = await chai.request(app)
+            const res = await request(app)
                 .get('/profile')
                 .set('Authorization', 'Bearer mockToken');
 
-            expect(res).to.have.status(200);
-            expect(res.body).to.deep.equal(mockProfile);
+            expect(res.status).toBe(200);
+            expect(res.body).toEqual(mockProfile);
         });
 
         it('should return 404 if profile not found', async () => {
-            Profile.findOne.resolves(null);
+            Profile.findOne.mockResolvedValue(null);
 
-            const res = await chai.request(app)
+            const res = await request(app)
                 .get('/profile')
                 .set('Authorization', 'Bearer mockToken');
 
-            expect(res).to.have.status(404);
-            expect(res.body.message).to.equal('Profile not found');
+            expect(res.status).toBe(404);
+            expect(res.body.message).toBe('Profile not found');
         });
 
         it('should return 500 if there is a server error', async () => {
-            Profile.findOne.rejects(new Error('Database error'));
+            Profile.findOne.mockRejectedValue(new Error('Database error'));
 
-            const res = await chai.request(app)
+            const res = await request(app)
                 .get('/profile')
                 .set('Authorization', 'Bearer mockToken');
 
-            expect(res).to.have.status(500);
-            expect(res.body.error).to.equal('Database error');
+            expect(res.status).toBe(500);
+            expect(res.body.error).toBe('Database error');
         });
     });
 
     describe('PUT /profile', () => {
         it('should update the user profile', async () => {
-            const mockProfile = { id: 1, user_id: 1, first_name: 'John', last_name: 'Doe', update: sinon.stub().resolves() };
+            const mockProfile = { id: 1, user_id: 1, first_name: 'John', last_name: 'Doe', update: jest.fn().mockResolvedValue() };
             const profileData = {
                 first_name: 'John',
                 last_name: 'Doe',
@@ -77,15 +74,15 @@ describe('Profile Routes', () => {
                 visibility: true
             };
 
-            Profile.findOne.resolves(mockProfile);
+            Profile.findOne.mockResolvedValue(mockProfile);
 
-            const res = await chai.request(app)
+            const res = await request(app)
                 .put('/profile')
                 .set('Authorization', 'Bearer mockToken')
                 .send(profileData);
 
-            expect(res).to.have.status(200);
-            expect(res.body.message).to.equal('Profile updated successfully');
+            expect(res.status).toBe(200);
+            expect(res.body.message).toBe('Profile updated successfully');
         });
 
         it('should create a new profile if not found', async () => {
@@ -100,23 +97,23 @@ describe('Profile Routes', () => {
                 visibility: true
             };
 
-            Profile.findOne.resolves(null);
-            Profile.create.resolves(mockProfile);
+            Profile.findOne.mockResolvedValue(null);
+            Profile.create.mockResolvedValue(mockProfile);
 
-            const res = await chai.request(app)
+            const res = await request(app)
                 .put('/profile')
                 .set('Authorization', 'Bearer mockToken')
                 .send(profileData);
 
-            expect(res).to.have.status(201);
-            expect(res.body.message).to.equal('Profile created successfully');
-            expect(res.body.profile).to.deep.equal(mockProfile);
+            expect(res.status).toBe(201);
+            expect(res.body.message).toBe('Profile created successfully');
+            expect(res.body.profile).toEqual(mockProfile);
         });
 
         it('should return 500 if there is a server error', async () => {
-            Profile.findOne.rejects(new Error('Database error'));
+            Profile.findOne.mockRejectedValue(new Error('Database error'));
 
-            const res = await chai.request(app)
+            const res = await request(app)
                 .put('/profile')
                 .set('Authorization', 'Bearer mockToken')
                 .send({
@@ -129,8 +126,8 @@ describe('Profile Routes', () => {
                     visibility: true
                 });
 
-            expect(res).to.have.status(500);
-            expect(res.body.error).to.equal('Database error');
+            expect(res.status).toBe(500);
+            expect(res.body.error).toBe('Database error');
         });
     });
 });

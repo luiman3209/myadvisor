@@ -1,59 +1,56 @@
-const chai = require('chai');
-const chaiHttp = require('chai-http');
-const sinon = require('sinon');
+const request = require('supertest');
 const { Message, User } = require('../models/models');
 const app = require('../app'); // Ensure this points to where your Express app is exported
 const passport = require('passport');
 const { Op } = require('sequelize');
-const expect = chai.expect;
 
-chai.use(chaiHttp);
+jest.mock('passport', () => ({
+    authenticate: jest.fn(),
+}));
 
 describe('Message Routes', () => {
     beforeEach(() => {
-        sinon.stub(passport, 'authenticate').callsFake((strategy, options, callback) => {
+        passport.authenticate.mockImplementation((strategy, options, callback) => {
             return (req, res, next) => {
                 req.user = { id: 1 }; // Mock user
                 next();
             };
         });
 
-        sinon.stub(Message, 'create');
-        sinon.stub(Message, 'findAll');
+        jest.spyOn(Message, 'create').mockResolvedValue();
+        jest.spyOn(Message, 'findAll').mockResolvedValue();
     });
 
     afterEach(() => {
-        passport.authenticate.restore();
-        Message.create.restore();
-        Message.findAll.restore();
+        jest.restoreAllMocks();
     });
 
     describe('POST /message', () => {
         it('should send a message', async () => {
             const mockMessage = { id: 1, sender_id: 1, receiver_id: 2, content: 'Hello!' };
 
-            Message.create.resolves(mockMessage);
+            Message.create.mockResolvedValue(mockMessage);
 
-            const res = await chai.request(app)
+            const res = await request(app)
                 .post('/message')
                 .set('Authorization', 'Bearer mockToken')
                 .send({ receiver_id: 2, content: 'Hello!' });
 
-            expect(res).to.have.status(200);
-            expect(res.body.message).to.equal('Message sent successfully');
-            expect(res.body.message).to.deep.equal(mockMessage);
+            expect(res.status).toBe(200);
+            expect(res.body.message).toEqual('Message sent successfully');
+            expect(res.body.message).toEqual(mockMessage);
         });
 
         it('should return 500 if there is a server error', async () => {
-            Message.create.rejects(new Error('Database error'));
+            Message.create.mockRejectedValue(new Error('Database error'));
 
-            const res = await chai.request(app)
+            const res = await request(app)
                 .post('/message')
                 .set('Authorization', 'Bearer mockToken')
                 .send({ receiver_id: 2, content: 'Hello!' });
 
-            expect(res).to.have.status(500);
-            expect(res.body.error).to.equal('Database error');
+            expect(res.status).toBe(500);
+            expect(res.body.error).toBe('Database error');
         });
     });
 
@@ -64,25 +61,25 @@ describe('Message Routes', () => {
                 { id: 2, sender_id: 2, receiver_id: 1, content: 'Hi!', Sender: { email: 'receiver@example.com' }, Receiver: { email: 'sender@example.com' }, sent_at: new Date() }
             ];
 
-            Message.findAll.resolves(mockMessages);
+            Message.findAll.mockResolvedValue(mockMessages);
 
-            const res = await chai.request(app)
+            const res = await request(app)
                 .get('/message/2')
                 .set('Authorization', 'Bearer mockToken');
 
-            expect(res).to.have.status(200);
-            expect(res.body).to.deep.equal(mockMessages);
+            expect(res.status).toBe(200);
+            expect(res.body).toEqual(mockMessages);
         });
 
         it('should return 500 if there is a server error', async () => {
-            Message.findAll.rejects(new Error('Database error'));
+            Message.findAll.mockRejectedValue(new Error('Database error'));
 
-            const res = await chai.request(app)
+            const res = await request(app)
                 .get('/message/2')
                 .set('Authorization', 'Bearer mockToken');
 
-            expect(res).to.have.status(500);
-            expect(res.body.error).to.equal('Database error');
+            expect(res.status).toBe(500);
+            expect(res.body.error).toBe('Database error');
         });
     });
 });

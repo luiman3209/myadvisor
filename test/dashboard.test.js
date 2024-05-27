@@ -1,33 +1,29 @@
-const chai = require('chai');
-const chaiHttp = require('chai-http');
-const sinon = require('sinon');
+const request = require('supertest');
 const { Appointment, Advisor, Review, User } = require('../models/models');
 const app = require('../app'); // Ensure this points to where your Express app is exported
 const passport = require('passport');
 const { Op } = require('sequelize');
-const expect = chai.expect;
 
-chai.use(chaiHttp);
+jest.mock('passport', () => ({
+    authenticate: jest.fn(),
+}));
 
 describe('Dashboard Routes', () => {
     beforeEach(() => {
-        sinon.stub(passport, 'authenticate').callsFake((strategy, options, callback) => {
+        passport.authenticate.mockImplementation((strategy, options, callback) => {
             return (req, res, next) => {
                 req.user = { id: 1 }; // Mock user
                 next();
             };
         });
 
-        sinon.stub(Appointment, 'findAll');
-        sinon.stub(Advisor, 'findOne');
-        sinon.stub(Review, 'findAll');
+        jest.spyOn(Appointment, 'findAll').mockResolvedValue();
+        jest.spyOn(Advisor, 'findOne').mockResolvedValue();
+        jest.spyOn(Review, 'findAll').mockResolvedValue();
     });
 
     afterEach(() => {
-        passport.authenticate.restore();
-        Appointment.findAll.restore();
-        Advisor.findOne.restore();
-        Review.findAll.restore();
+        jest.restoreAllMocks();
     });
 
     describe('GET /dashboard/user', () => {
@@ -36,29 +32,28 @@ describe('Dashboard Routes', () => {
             const mockAdvisors = [{ id: 1, Advisor: { User: { email: 'advisor@example.com' } } }];
             const mockActivity = [{ id: 1, created_at: new Date(), Advisor: { User: { email: 'advisor@example.com' } } }];
 
-            Appointment.findAll.onFirstCall().resolves(mockAppointments);
-            Appointment.findAll.onSecondCall().resolves(mockAdvisors);
-            Review.findAll.resolves(mockActivity);
+            Appointment.findAll.mockResolvedValueOnce(mockAppointments).mockResolvedValueOnce(mockAdvisors);
+            Review.findAll.mockResolvedValue(mockActivity);
 
-            const res = await chai.request(app)
+            const res = await request(app)
                 .get('/dashboard/user')
                 .set('Authorization', 'Bearer mockToken');
 
-            expect(res).to.have.status(200);
-            expect(res.body.upcomingAppointments).to.deep.equal(mockAppointments);
-            expect(res.body.bookedAdvisors).to.deep.equal(mockAdvisors);
-            expect(res.body.recentActivity).to.deep.equal(mockActivity);
+            expect(res.status).toBe(200);
+            expect(res.body.upcomingAppointments).toEqual(mockAppointments);
+            expect(res.body.bookedAdvisors).toEqual(mockAdvisors);
+            expect(res.body.recentActivity).toEqual(mockActivity);
         });
 
         it('should return 500 if there is a server error', async () => {
-            Appointment.findAll.rejects(new Error('Database error'));
+            Appointment.findAll.mockRejectedValue(new Error('Database error'));
 
-            const res = await chai.request(app)
+            const res = await request(app)
                 .get('/dashboard/user')
                 .set('Authorization', 'Bearer mockToken');
 
-            expect(res).to.have.status(500);
-            expect(res.body.error).to.equal('Database error');
+            expect(res.status).toBe(500);
+            expect(res.body.error).toBe('Database error');
         });
     });
 
@@ -69,41 +64,40 @@ describe('Dashboard Routes', () => {
             const mockInteractions = [{ id: 1, start_time: new Date(), User: { email: 'user@example.com' } }];
             const mockProfileViews = [{ profile_views: 100 }];
 
-            Advisor.findOne.resolves(mockAdvisor);
-            Appointment.findAll.onFirstCall().resolves(mockAppointments);
-            Appointment.findAll.onSecondCall().resolves(mockInteractions);
-            Advisor.findAll.resolves(mockProfileViews);
+            Advisor.findOne.mockResolvedValue(mockAdvisor);
+            Appointment.findAll.mockResolvedValueOnce(mockAppointments).mockResolvedValueOnce(mockInteractions);
+            Advisor.findAll.mockResolvedValue(mockProfileViews);
 
-            const res = await chai.request(app)
+            const res = await request(app)
                 .get('/dashboard/advisor')
                 .set('Authorization', 'Bearer mockToken');
 
-            expect(res).to.have.status(200);
-            expect(res.body.upcomingAppointments).to.deep.equal(mockAppointments);
-            expect(res.body.clientInteractions).to.deep.equal(mockInteractions);
-            expect(res.body.profileViews).to.deep.equal(mockProfileViews);
+            expect(res.status).toBe(200);
+            expect(res.body.upcomingAppointments).toEqual(mockAppointments);
+            expect(res.body.clientInteractions).toEqual(mockInteractions);
+            expect(res.body.profileViews).toEqual(mockProfileViews);
         });
 
         it('should return 404 if advisor profile is not found', async () => {
-            Advisor.findOne.resolves(null);
+            Advisor.findOne.mockResolvedValue(null);
 
-            const res = await chai.request(app)
+            const res = await request(app)
                 .get('/dashboard/advisor')
                 .set('Authorization', 'Bearer mockToken');
 
-            expect(res).to.have.status(404);
-            expect(res.body.message).to.equal('Advisor profile not found');
+            expect(res.status).toBe(404);
+            expect(res.body.message).toBe('Advisor profile not found');
         });
 
         it('should return 500 if there is a server error', async () => {
-            Advisor.findOne.rejects(new Error('Database error'));
+            Advisor.findOne.mockRejectedValue(new Error('Database error'));
 
-            const res = await chai.request(app)
+            const res = await request(app)
                 .get('/dashboard/advisor')
                 .set('Authorization', 'Bearer mockToken');
 
-            expect(res).to.have.status(500);
-            expect(res.body.error).to.equal('Database error');
+            expect(res.status).toBe(500);
+            expect(res.body.error).toBe('Database error');
         });
     });
 });

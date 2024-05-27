@@ -9,15 +9,9 @@ const path = require('path');
 const env = process.env.NODE_ENV || 'development';
 const config = require(path.join(__dirname, '/../config/config.json'))[env];
 
-console.log('Environment:', process.env.NODE_ENV);
-console.log('Using environment variable:', config.use_env_variable, process.env[config.use_env_variable]);
-
-
 
 let sequelize;
-if (!process.env[config.use_env_variable]) {
-    throw new Error(`Environment variable ${config.use_env_variable} is not set`);
-}
+
 if (config.use_env_variable) {
     sequelize = new Sequelize(process.env[config.use_env_variable], config);
 
@@ -63,7 +57,7 @@ Payment.belongsTo(User, { foreignKey: 'user_id' });
 Appointment.hasMany(Payment, { foreignKey: 'appointment_id' });
 Payment.belongsTo(Appointment, { foreignKey: 'appointment_id' });
 
-sequelize.sync();
+//sequelize.sync();
 
 module.exports = {
     sequelize,

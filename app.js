@@ -31,8 +31,15 @@ app.use('/message', messageRoutes); // Add this line
 
 const PORT = process.env.PORT || 3000;
 
-sequelize.sync().then(() => {
+//sequelize.sync().then(() => {
+//    app.listen(PORT, () => {
+//        console.log(`Server is running on port ${PORT}`);
+//    });
+//});
+
+if (process.env.NODE_ENV !== 'test') {
     app.listen(PORT, () => {
-        console.log(`Server is running on port ${PORT}`);
+      console.log(`Server is running on port ${PORT}`);
     });
-});
+  }
+module.exports = app;
