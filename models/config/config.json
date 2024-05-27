@@ -1,23 +1,13 @@
 {
   "development": {
-    "use_env_variable": "DATABASE_URL_LOCAL",
-    "dialect": "postgres",
-    "dialectOptions": {},
-    "define": {
-      "schema": "myadvisor"
-    }
+    "dialect": "sqlite",
+    "storage": ":memory:",
+    "logging": false
   },
   "test": {
     "dialect": "sqlite",
     "storage": ":memory:",
     "logging": false
-  },
-  "testA": {
-    "username": "your_db_username",
-    "password": "your_db_password",
-    "database": "your_db_name",
-    "host": "127.0.0.1",
-    "dialect": "postgres"
   },
   "production": {
     "use_env_variable": "DATABASE_URL",

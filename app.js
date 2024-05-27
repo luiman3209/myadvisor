@@ -10,7 +10,9 @@ const dashboardRoutes = require('./routes/dashboard');
 //const paymentRoutes = require('./routes/payment');
 const adminRoutes = require('./routes/admin');
 const messageRoutes = require('./routes/message');
-const { sequelize } = require('./models/models');
+
+const setupSwagger = require('./swagger');
+
 
 require('./config/passport');
 
@@ -37,7 +39,10 @@ const PORT = process.env.PORT || 3000;
 //    });
 //});
 
+
+
 if (process.env.NODE_ENV !== 'test') {
+    setupSwagger(app);
     app.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
     });

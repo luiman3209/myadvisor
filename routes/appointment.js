@@ -3,19 +3,75 @@ const passport = require('passport');
 
 const { Appointment, Advisor, User } = require('../models/models');
 const { sendEmail } = require('../utils/notification');
-
+const { calculateFreeWindows } = require('../utils/schedule');
 
 const router = express.Router();
+const minFreeWindowDuration = 30; // Minimum free window duration in minutes
 
-
-// Book an appointment and create a payment intent
+/**
+ * @swagger
+ * /appointment/book:
+ *   post:
+ *     summary: Book an appointment and create a payment intent
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               advisor_id:
+ *                 type: integer
+ *                 example: 1
+ *               start_time:
+ *                 type: string
+ *                 format: date-time
+ *                 example: '2023-01-01T10:00:00Z'
+ *               end_time:
+ *                 type: string
+ *                 format: date-time
+ *                 example: '2023-01-01T11:00:00Z'
+ *     responses:
+ *       200:
+ *         description: Appointment booked successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Appointment booked successfully"
+ *                 appointment:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                       example: 1
+ *                     user_id:
+ *                       type: integer
+ *                       example: 1
+ *                     advisor_id:
+ *                       type: integer
+ *                       example: 1
+ *                     start_time:
+ *                       type: string
+ *                       format: date-time
+ *                       example: '2023-01-01T10:00:00Z'
+ *                     end_time:
+ *                       type: string
+ *                       format: date-time
+ *                       example: '2023-01-01T11:00:00Z'
+ *                     status:
+ *                       type: string
+ *                       example: 'scheduled'
+ */
 router.post('/book', passport.authenticate('jwt', { session: false }), async (req, res) => {
     try {
         const { advisor_id, start_time, end_time } = req.body;
         const user_id = req.user.id;
-
-        // TODO: check time before saving using calculate free windows
-
 
         const appointment = await Appointment.create({
             user_id,
@@ -25,23 +81,6 @@ router.post('/book', passport.authenticate('jwt', { session: false }), async (re
             status: 'scheduled',
         });
 
-        // Handle payment processing
-        //const paymentIntent = await stripe.paymentIntents.create({
-        //    amount: Math.round(amount * 100), // Stripe works with smallest currency unit
-        //    currency: 'usd',
-        //    payment_method_types: ['card'],
-        //});
-
-        //const payment = await Payment.create({
-        //    user_id,
-        //    appointment_id: appointment.appointment_id,
-        //    amount,
-        //    payment_method: 'card',
-        //    payment_status: 'pending',
-        //    stripe_payment_intent_id: paymentIntent.id,
-        //});
-
-        // Send notification email
         const advisor = await Advisor.findByPk(advisor_id, { include: User });
         const user = await User.findByPk(user_id);
 
@@ -51,16 +90,50 @@ router.post('/book', passport.authenticate('jwt', { session: false }), async (re
         res.json({
             message: 'Appointment booked successfully',
             appointment,
-            //payment,
-            //clientSecret: paymentIntent.client_secret, // Return client secret for payment
         });
     } catch (error) {
-
         res.status(500).json({ error: error.message });
     }
 });
 
-// Get all appointments for a user
+/**
+ * @swagger
+ * /appointment/user:
+ *   get:
+ *     summary: Get all appointments for a user
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: A list of appointments for the user
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                     example: 1
+ *                   user_id:
+ *                     type: integer
+ *                     example: 1
+ *                   advisor_id:
+ *                     type: integer
+ *                     example: 1
+ *                   start_time:
+ *                     type: string
+ *                     format: date-time
+ *                     example: '2023-01-01T10:00:00Z'
+ *                   end_time:
+ *                     type: string
+ *                     format: date-time
+ *                     example: '2023-01-01T11:00:00Z'
+ *                   status:
+ *                     type: string
+ *                     example: 'scheduled'
+ */
 router.get('/user', passport.authenticate('jwt', { session: false }), async (req, res) => {
     try {
         const appointments = await Appointment.findAll({ where: { user_id: req.user.id } });
@@ -70,7 +143,44 @@ router.get('/user', passport.authenticate('jwt', { session: false }), async (req
     }
 });
 
-// Get all appointments for an advisor
+/**
+ * @swagger
+ * /appointment/advisor:
+ *   get:
+ *     summary: Get all appointments for an advisor
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: A list of appointments for the advisor
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                     example: 1
+ *                   user_id:
+ *                     type: integer
+ *                     example: 1
+ *                   advisor_id:
+ *                     type: integer
+ *                     example: 1
+ *                   start_time:
+ *                     type: string
+ *                     format: date-time
+ *                     example: '2023-01-01T10:00:00Z'
+ *                   end_time:
+ *                     type: string
+ *                     format: date-time
+ *                     example: '2023-01-01T11:00:00Z'
+ *                   status:
+ *                     type: string
+ *                     example: 'scheduled'
+ */
 router.get('/advisor', passport.authenticate('jwt', { session: false }), async (req, res) => {
     try {
         const advisor = await Advisor.findOne({ where: { user_id: req.user.id } });
@@ -85,7 +195,65 @@ router.get('/advisor', passport.authenticate('jwt', { session: false }), async (
     }
 });
 
-// Update appointment status
+/**
+ * @swagger
+ * /appointment/{appointmentId}/status:
+ *   put:
+ *     summary: Update appointment status
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: appointmentId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The appointment ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 example: 'completed'
+ *     responses:
+ *       200:
+ *         description: Appointment status updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: 'Appointment status updated successfully'
+ *                 appointment:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                       example: 1
+ *                     user_id:
+ *                       type: integer
+ *                       example: 1
+ *                     advisor_id:
+ *                       type: integer
+ *                       example: 1
+ *                     start_time:
+ *                       type: string
+ *                       format: date-time
+ *                       example: '2023-01-01T10:00:00Z'
+ *                     end_time:
+ *                       type: string
+ *                       format: date-time
+ *                       example: '2023-01-01T11:00:00Z'
+ *                     status:
+ *                       type: string
+ *                       example: 'completed'
+ */
 router.put('/:appointmentId/status', passport.authenticate('jwt', { session: false }), async (req, res) => {
     try {
         const { status } = req.body;
@@ -99,28 +267,68 @@ router.put('/:appointmentId/status', passport.authenticate('jwt', { session: fal
         await appointment.update({ status });
         res.json({ message: 'Appointment status updated successfully', appointment });
     } catch (error) {
-        
         res.status(500).json({ error: error.message });
     }
 });
 
-const { calculateFreeWindows } = require('../utils/schedule');
-
-
-const minFreeWindowDuration = 30; // Minimum free window duration in minutes
-
-// Get free windows for a given advisor
+/**
+ * @swagger
+ * /appointment/free-windows/{advisorId}:
+ *   get:
+ *     summary: Get free windows for a given advisor
+ *     parameters:
+ *       - in: path
+ *         name: advisorId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The advisor ID
+ *     responses:
+ *       200:
+ *         description: Free time windows for the advisor
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 freeWindowsShift1:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       start:
+ *                         type: string
+ *                         format: date-time
+ *                         example: '2023-01-01T10:00:00Z'
+ *                       end:
+ *                         type: string
+ *                         format: date-time
+ *                         example: '2023-01-01T11:00:00Z'
+ *                 freeWindowsShift2:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       start:
+ *                         type: string
+ *                         format: date-time
+ *                         example: '2023-01-01T15:00:00Z'
+ *                       end:
+ *                         type: string
+ *                         format: date-time
+ *                         example: '2023-01-01T16:00:00Z'
+ */
 router.get('/free-windows/:advisorId', async (req, res) => {
     try {
         const advisorId = req.params.advisorId;
 
-        // TODO: Fetch working hours for the advisor from the database
+        // Fetch working hours for the advisor from the database
         const advisor = await Advisor.findByPk(advisorId);
 
         // Example working hours and appointment duration (in minutes)
         let workingHours = {
             start: advisor.start_shift_1,
-            end: advisor.start_shift_2,
+            end: advisor.end_shift_1,
         };
 
         // Fetch existing appointments for the advisor
@@ -138,13 +346,12 @@ router.get('/free-windows/:advisorId', async (req, res) => {
                 end: advisor.end_shift_2,
             };
             let freeWindowsShift2 = calculateFreeWindows(appointments, workingHours, minFreeWindowDuration);
-            res.json({ freeWindowsShift1: freeWindowsShift1, freeWindowsShift2: freeWindowsShift2 });
+            res.json({ freeWindowsShift1, freeWindowsShift2 });
+        } else {
+            res.json({ freeWindowsShift1 });
         }
 
-        res.json({ freeWindowsShift1: freeWindowsShift1 });
-
     } catch (error) {
-        
         res.status(500).json({ error: error.message });
     }
 });

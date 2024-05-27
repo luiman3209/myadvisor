@@ -4,7 +4,59 @@ const { Profile } = require('../models/models');
 
 const router = express.Router();
 
-// Get user profile
+/**
+ * @swagger
+ * /profile:
+ *   get:
+ *     summary: Get user profile
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User profile retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                   example: 1
+ *                 user_id:
+ *                   type: integer
+ *                   example: 1
+ *                 first_name:
+ *                   type: string
+ *                   example: "John"
+ *                 last_name:
+ *                   type: string
+ *                   example: "Doe"
+ *                 phone_number:
+ *                   type: string
+ *                   example: "123-456-7890"
+ *                 address:
+ *                   type: string
+ *                   example: "123 Main St"
+ *                 preferences:
+ *                   type: string
+ *                   example: "Preference details"
+ *                 financial_goals:
+ *                   type: string
+ *                   example: "Financial goals details"
+ *                 visibility:
+ *                   type: boolean
+ *                   example: true
+ *       404:
+ *         description: Profile not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Profile not found"
+ */
 router.get('/', passport.authenticate('jwt', { session: false }), async (req, res) => {
     const profile = await Profile.findOne({ where: { user_id: req.user.id } });
     if (!profile) {
@@ -13,7 +65,123 @@ router.get('/', passport.authenticate('jwt', { session: false }), async (req, re
     res.json(profile);
 });
 
-// Update or create user profile
+/**
+ * @swagger
+ * /profile:
+ *   put:
+ *     summary: Update or create user profile
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               first_name:
+ *                 type: string
+ *                 example: "John"
+ *               last_name:
+ *                 type: string
+ *                 example: "Doe"
+ *               phone_number:
+ *                 type: string
+ *                 example: "123-456-7890"
+ *               address:
+ *                 type: string
+ *                 example: "123 Main St"
+ *               preferences:
+ *                 type: string
+ *                 example: "Preference details"
+ *               financial_goals:
+ *                 type: string
+ *                 example: "Financial goals details"
+ *               visibility:
+ *                 type: boolean
+ *                 example: true
+ *     responses:
+ *       200:
+ *         description: Profile updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Profile updated successfully"
+ *                 profile:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                       example: 1
+ *                     user_id:
+ *                       type: integer
+ *                       example: 1
+ *                     first_name:
+ *                       type: string
+ *                       example: "John"
+ *                     last_name:
+ *                       type: string
+ *                       example: "Doe"
+ *                     phone_number:
+ *                       type: string
+ *                       example: "123-456-7890"
+ *                     address:
+ *                       type: string
+ *                       example: "123 Main St"
+ *                     preferences:
+ *                       type: string
+ *                       example: "Preference details"
+ *                     financial_goals:
+ *                       type: string
+ *                       example: "Financial goals details"
+ *                     visibility:
+ *                       type: boolean
+ *                       example: true
+ *       201:
+ *         description: Profile created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Profile created successfully"
+ *                 profile:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                       example: 1
+ *                     user_id:
+ *                       type: integer
+ *                       example: 1
+ *                     first_name:
+ *                       type: string
+ *                       example: "John"
+ *                     last_name:
+ *                       type: string
+ *                       example: "Doe"
+ *                     phone_number:
+ *                       type: string
+ *                       example: "123-456-7890"
+ *                     address:
+ *                       type: string
+ *                       example: "123 Main St"
+ *                     preferences:
+ *                       type: string
+ *                       example: "Preference details"
+ *                     financial_goals:
+ *                       type: string
+ *                       example: "Financial goals details"
+ *                     visibility:
+ *                       type: boolean
+ *                       example: true
+ */
 router.put('/', passport.authenticate('jwt', { session: false }), async (req, res) => {
     const { first_name, last_name, phone_number, address, preferences, financial_goals, visibility } = req.body;
 
@@ -37,7 +205,5 @@ router.put('/', passport.authenticate('jwt', { session: false }), async (req, re
     await profile.update({ first_name, last_name, phone_number, address, preferences, financial_goals, visibility });
     res.json({ message: 'Profile updated successfully', profile });
 });
-
-
 
 module.exports = router;

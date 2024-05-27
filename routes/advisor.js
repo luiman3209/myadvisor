@@ -4,7 +4,52 @@ const { Advisor, Review, Profile, User } = require('../models/models');
 
 const router = express.Router();
 
-// Get detailed advisor profile
+/**
+ * @swagger
+ * /advisor:
+ *   get:
+ *     summary: Get detailed advisor profile
+ *     responses:
+ *       200:
+ *         description: Detailed advisor profile
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 advisor:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                       example: 1
+ *                     user_id:
+ *                       type: integer
+ *                       example: 1
+ *                     specialty:
+ *                       type: string
+ *                       example: Financial Advisor
+ *                 profileReviews:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                         example: 1
+ *                       user_id:
+ *                         type: integer
+ *                         example: 1
+ *                       advisor_id:
+ *                         type: integer
+ *                         example: 1
+ *                       review:
+ *                         type: string
+ *                         example: "Great advice!"
+ *                       rating:
+ *                         type: integer
+ *                         example: 5
+ */
 router.get('/', async (req, res) => {
     try {
         // Find the advisor using the user_id
@@ -41,7 +86,59 @@ router.get('/', async (req, res) => {
     }
 });
 
-// Get detailed advisor profile
+/**
+ * @swagger
+ * /advisor/{advisorId}:
+ *   get:
+ *     summary: Get detailed advisor profile by ID
+ *     parameters:
+ *       - in: path
+ *         name: advisorId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The advisor ID
+ *     responses:
+ *       200:
+ *         description: Detailed advisor profile
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 advisor:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                       example: 1
+ *                     user_id:
+ *                       type: integer
+ *                       example: 1
+ *                     specialty:
+ *                       type: string
+ *                       example: Financial Advisor
+ *                 profileReviews:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                         example: 1
+ *                       user_id:
+ *                         type: integer
+ *                         example: 1
+ *                       advisor_id:
+ *                         type: integer
+ *                         example: 1
+ *                       review:
+ *                         type: string
+ *                         example: "Great advice!"
+ *                       rating:
+ *                         type: integer
+ *                         example: 5
+ */
 router.get('/:advisorId', async (req, res) => {
     try {
         const advisor = await Advisor.findByPk(req.params.advisorId, {
@@ -75,9 +172,63 @@ router.get('/:advisorId', async (req, res) => {
     }
 });
 
-
-
-// Leave a review for an advisor
+/**
+ * @swagger
+ * /advisor/{advisorId}/review:
+ *   post:
+ *     summary: Leave a review for an advisor
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: advisorId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The advisor ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               rating:
+ *                 type: integer
+ *                 example: 5
+ *               review:
+ *                 type: string
+ *                 example: "Great advice!"
+ *     responses:
+ *       200:
+ *         description: Review added successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Review added successfully"
+ *                 review:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                       example: 1
+ *                     user_id:
+ *                       type: integer
+ *                       example: 1
+ *                     advisor_id:
+ *                       type: integer
+ *                       example: 1
+ *                     rating:
+ *                       type: integer
+ *                       example: 5
+ *                     review:
+ *                       type: string
+ *                       example: "Great advice!"
+ */
 router.post('/:advisorId/review', passport.authenticate('jwt', { session: false }), async (req, res) => {
     try {
         const { rating, review } = req.body;
@@ -97,6 +248,35 @@ router.post('/:advisorId/review', passport.authenticate('jwt', { session: false 
     }
 });
 
+/**
+ * @swagger
+ * /advisor/{advisorId}/contact:
+ *   get:
+ *     summary: Get advisor contact information
+ *     parameters:
+ *       - in: path
+ *         name: advisorId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The advisor ID
+ *     responses:
+ *       200:
+ *         description: Advisor contact information
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 email:
+ *                   type: string
+ *                   example: "advisor@example.com"
+ *                 contactInformation:
+ *                   type: string
+ *                   example: "Contact details here"
+ *       404:
+ *         description: Advisor not found
+ */
 router.get('/:advisorId/contact', async (req, res) => {
     try {
         const advisor = await Advisor.findByPk(req.params.advisorId, {

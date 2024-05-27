@@ -1,5 +1,5 @@
 const express = require('express');
-const { User, Advisor, Review } = require('../models/models');
+const { User, Advisor, Review, Appointment } = require('../models/models');
 const passport = require('passport');
 
 const router = express.Router();
@@ -12,7 +12,30 @@ const isAdmin = (req, res, next) => {
     next();
 };
 
-// Get all users
+/**
+ * @swagger
+ * /admin/users:
+ *   get:
+ *     summary: Retrieve a list of users
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: A list of users
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                     example: 1
+ *                   name:
+ *                     type: string
+ *                     example: John Doe
+ */
 router.get('/users', passport.authenticate('jwt', { session: false }), isAdmin, async (req, res) => {
     try {
         const users = await User.findAll();
@@ -22,7 +45,53 @@ router.get('/users', passport.authenticate('jwt', { session: false }), isAdmin, 
     }
 });
 
-// Update a user
+/**
+ * @swagger
+ * /admin/users/{id}:
+ *   put:
+ *     summary: Update a user
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The user ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: John Doe
+ *               email:
+ *                 type: string
+ *                 example: john.doe@example.com
+ *     responses:
+ *       200:
+ *         description: The updated user
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                   example: 1
+ *                 name:
+ *                   type: string
+ *                   example: John Doe
+ *                 email:
+ *                   type: string
+ *                   example: john.doe@example.com
+ *       404:
+ *         description: User not found
+ */
 router.put('/users/:id', passport.authenticate('jwt', { session: false }), isAdmin, async (req, res) => {
     try {
         const user = await User.findByPk(req.params.id);
@@ -36,7 +105,26 @@ router.put('/users/:id', passport.authenticate('jwt', { session: false }), isAdm
     }
 });
 
-// Delete a user
+/**
+ * @swagger
+ * /admin/users/{id}:
+ *   delete:
+ *     summary: Delete a user
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The user ID
+ *     responses:
+ *       200:
+ *         description: User deleted successfully
+ *       404:
+ *         description: User not found
+ */
 router.delete('/users/:id', passport.authenticate('jwt', { session: false }), isAdmin, async (req, res) => {
     try {
         const user = await User.findByPk(req.params.id);
@@ -50,7 +138,33 @@ router.delete('/users/:id', passport.authenticate('jwt', { session: false }), is
     }
 });
 
-// Get all advisors
+/**
+ * @swagger
+ * /admin/advisors:
+ *   get:
+ *     summary: Retrieve a list of advisors
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: A list of advisors
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                     example: 1
+ *                   userId:
+ *                     type: integer
+ *                     example: 1
+ *                   specialty:
+ *                     type: string
+ *                     example: Financial Advisor
+ */
 router.get('/advisors', passport.authenticate('jwt', { session: false }), isAdmin, async (req, res) => {
     try {
         const advisors = await Advisor.findAll({ include: User });
@@ -60,7 +174,50 @@ router.get('/advisors', passport.authenticate('jwt', { session: false }), isAdmi
     }
 });
 
-// Update an advisor
+/**
+ * @swagger
+ * /admin/advisors/{id}:
+ *   put:
+ *     summary: Update an advisor
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The advisor ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               specialty:
+ *                 type: string
+ *                 example: Financial Advisor
+ *     responses:
+ *       200:
+ *         description: The updated advisor
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                   example: 1
+ *                 userId:
+ *                   type: integer
+ *                   example: 1
+ *                 specialty:
+ *                   type: string
+ *                   example: Financial Advisor
+ *       404:
+ *         description: Advisor not found
+ */
 router.put('/advisors/:id', passport.authenticate('jwt', { session: false }), isAdmin, async (req, res) => {
     try {
         const advisor = await Advisor.findByPk(req.params.id);
@@ -74,7 +231,26 @@ router.put('/advisors/:id', passport.authenticate('jwt', { session: false }), is
     }
 });
 
-// Delete an advisor
+/**
+ * @swagger
+ * /admin/advisors/{id}:
+ *   delete:
+ *     summary: Delete an advisor
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The advisor ID
+ *     responses:
+ *       200:
+ *         description: Advisor deleted successfully
+ *       404:
+ *         description: Advisor not found
+ */
 router.delete('/advisors/:id', passport.authenticate('jwt', { session: false }), isAdmin, async (req, res) => {
     try {
         const advisor = await Advisor.findByPk(req.params.id);
@@ -88,7 +264,36 @@ router.delete('/advisors/:id', passport.authenticate('jwt', { session: false }),
     }
 });
 
-// Get all reviews
+/**
+ * @swagger
+ * /admin/reviews:
+ *   get:
+ *     summary: Retrieve a list of reviews
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: A list of reviews
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                     example: 1
+ *                   userId:
+ *                     type: integer
+ *                     example: 1
+ *                   advisorId:
+ *                     type: integer
+ *                     example: 1
+ *                   reviewText:
+ *                     type: string
+ *                     example: "Great advice!"
+ */
 router.get('/reviews', passport.authenticate('jwt', { session: false }), isAdmin, async (req, res) => {
     try {
         const reviews = await Review.findAll({ include: [User, Advisor] });
@@ -98,7 +303,26 @@ router.get('/reviews', passport.authenticate('jwt', { session: false }), isAdmin
     }
 });
 
-// Delete a review
+/**
+ * @swagger
+ * /admin/reviews/{id}:
+ *   delete:
+ *     summary: Delete a review
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The review ID
+ *     responses:
+ *       200:
+ *         description: Review deleted successfully
+ *       404:
+ *         description: Review not found
+ */
 router.delete('/reviews/:id', passport.authenticate('jwt', { session: false }), isAdmin, async (req, res) => {
     try {
         const review = await Review.findByPk(req.params.id);
@@ -112,10 +336,51 @@ router.delete('/reviews/:id', passport.authenticate('jwt', { session: false }), 
     }
 });
 
-// Get analytics
+/**
+ * @swagger
+ * /admin/analytics:
+ *   get:
+ *     summary: Get analytics data
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Analytics data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 userCount:
+ *                   type: integer
+ *                   example: 100
+ *                 advisorCount:
+ *                   type: integer
+ *                   example: 20
+ *                 appointmentCount:
+ *                   type: integer
+ *                   example: 150
+ *                 recentActivities:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                         example: 1
+ *                       userId:
+ *                         type: integer
+ *                         example: 1
+ *                       advisorId:
+ *                         type: integer
+ *                         example: 1
+ *                       createdAt:
+ *                         type: string
+ *                         format: date-time
+ *                         example: '2023-01-01T00:00:00.000Z'
+ */
 router.get('/analytics', passport.authenticate('jwt', { session: false }), isAdmin, async (req, res) => {
     try {
-        // Example analytics
         const userCount = await User.count();
         const advisorCount = await Advisor.count();
         const appointmentCount = await Appointment.count();
@@ -136,6 +401,5 @@ router.get('/analytics', passport.authenticate('jwt', { session: false }), isAdm
         res.status(500).json({ error: error.message });
     }
 });
-
 
 module.exports = router;
