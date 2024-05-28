@@ -17,6 +17,8 @@ const isAdmin = (req, res, next) => {
  * /admin/users:
  *   get:
  *     summary: Retrieve a list of users
+ *     tags:
+ *       - Admin
  *     security:
  *       - bearerAuth: []
  *     responses:
@@ -50,6 +52,8 @@ router.get('/users', passport.authenticate('jwt', { session: false }), isAdmin, 
  * /admin/users/{id}:
  *   put:
  *     summary: Update a user
+ *     tags:
+ *       - Admin
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -110,6 +114,8 @@ router.put('/users/:id', passport.authenticate('jwt', { session: false }), isAdm
  * /admin/users/{id}:
  *   delete:
  *     summary: Delete a user
+ *     tags:
+ *       - Admin
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -143,6 +149,8 @@ router.delete('/users/:id', passport.authenticate('jwt', { session: false }), is
  * /admin/advisors:
  *   get:
  *     summary: Retrieve a list of advisors
+ *     tags:
+ *       - Admin
  *     security:
  *       - bearerAuth: []
  *     responses:
@@ -179,6 +187,8 @@ router.get('/advisors', passport.authenticate('jwt', { session: false }), isAdmi
  * /admin/advisors/{id}:
  *   put:
  *     summary: Update an advisor
+ *     tags:
+ *       - Admin
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -236,6 +246,8 @@ router.put('/advisors/:id', passport.authenticate('jwt', { session: false }), is
  * /admin/advisors/{id}:
  *   delete:
  *     summary: Delete an advisor
+ *     tags:
+ *       - Admin
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -269,6 +281,8 @@ router.delete('/advisors/:id', passport.authenticate('jwt', { session: false }),
  * /admin/reviews:
  *   get:
  *     summary: Retrieve a list of reviews
+ *     tags:
+ *       - Admin
  *     security:
  *       - bearerAuth: []
  *     responses:
@@ -308,6 +322,8 @@ router.get('/reviews', passport.authenticate('jwt', { session: false }), isAdmin
  * /admin/reviews/{id}:
  *   delete:
  *     summary: Delete a review
+ *     tags:
+ *       - Admin
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -341,6 +357,8 @@ router.delete('/reviews/:id', passport.authenticate('jwt', { session: false }), 
  * /admin/analytics:
  *   get:
  *     summary: Get analytics data
+ *     tags:
+ *       - Admin
  *     security:
  *       - bearerAuth: []
  *     responses:

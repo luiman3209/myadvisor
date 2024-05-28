@@ -9,6 +9,8 @@ const router = express.Router();
  * /users/{id}:
  *   get:
  *     summary: Get user info by ID
+ *     tags:
+ *       - User
  *     parameters:
  *       - in: path
  *         name: id
@@ -74,6 +76,8 @@ router.get('/users/:id', async (req, res) => {
  * /users/{id}:
  *   put:
  *     summary: Update user info
+ *     tags:
+ *       - User
  *     parameters:
  *       - in: path
  *         name: id

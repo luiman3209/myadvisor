@@ -13,6 +13,8 @@ const minFreeWindowDuration = 30; // Minimum free window duration in minutes
  * /appointment/book:
  *   post:
  *     summary: Book an appointment and create a payment intent
+ *     tags:
+ *       - Appointment
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -101,6 +103,8 @@ router.post('/book', passport.authenticate('jwt', { session: false }), async (re
  * /appointment/user:
  *   get:
  *     summary: Get all appointments for a user
+ *     tags:
+ *       - Appointment
  *     security:
  *       - bearerAuth: []
  *     responses:
@@ -148,6 +152,8 @@ router.get('/user', passport.authenticate('jwt', { session: false }), async (req
  * /appointment/advisor:
  *   get:
  *     summary: Get all appointments for an advisor
+ *     tags:
+ *       - Appointment
  *     security:
  *       - bearerAuth: []
  *     responses:
@@ -200,6 +206,8 @@ router.get('/advisor', passport.authenticate('jwt', { session: false }), async (
  * /appointment/{appointmentId}/status:
  *   put:
  *     summary: Update appointment status
+ *     tags:
+ *       - Appointment
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -276,6 +284,8 @@ router.put('/:appointmentId/status', passport.authenticate('jwt', { session: fal
  * /appointment/free-windows/{advisorId}:
  *   get:
  *     summary: Get free windows for a given advisor
+ *     tags:
+ *       - Appointment
  *     parameters:
  *       - in: path
  *         name: advisorId

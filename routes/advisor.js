@@ -9,6 +9,8 @@ const router = express.Router();
  * /advisor:
  *   get:
  *     summary: Get detailed advisor profile
+ *     tags:
+ *       - Advisor
  *     responses:
  *       200:
  *         description: Detailed advisor profile
@@ -91,6 +93,8 @@ router.get('/', async (req, res) => {
  * /advisor/{advisorId}:
  *   get:
  *     summary: Get detailed advisor profile by ID
+ *     tags:
+ *       - Advisor
  *     parameters:
  *       - in: path
  *         name: advisorId
@@ -177,6 +181,8 @@ router.get('/:advisorId', async (req, res) => {
  * /advisor/{advisorId}/review:
  *   post:
  *     summary: Leave a review for an advisor
+ *     tags:
+ *       - Advisor
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -253,6 +259,8 @@ router.post('/:advisorId/review', passport.authenticate('jwt', { session: false 
  * /advisor/{advisorId}/contact:
  *   get:
  *     summary: Get advisor contact information
+ *     tags:
+ *       - Advisor
  *     parameters:
  *       - in: path
  *         name: advisorId
@@ -277,6 +285,7 @@ router.post('/:advisorId/review', passport.authenticate('jwt', { session: false 
  *       404:
  *         description: Advisor not found
  */
+
 router.get('/:advisorId/contact', async (req, res) => {
     try {
         const advisor = await Advisor.findByPk(req.params.advisorId, {

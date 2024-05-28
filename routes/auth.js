@@ -8,6 +8,8 @@ const router = express.Router();
  * /auth/register:
  *   post:
  *     summary: Register a new user
+ *     tags:
+ *       - Auth
  *     requestBody:
  *       required: true
  *       content:
@@ -76,6 +78,8 @@ router.post('/register', async (req, res) => {
  * /auth/login:
  *   post:
  *     summary: Login a user
+ *     tags:
+ *       - Auth
  *     requestBody:
  *       required: true
  *       content:
