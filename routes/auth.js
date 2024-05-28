@@ -62,10 +62,7 @@ router.post('/register', async (req, res) => {
     try {
         const { email, password, role } = req.body;
 
-        // Hash the password
-        console.log(email, password, role);
         // Create the user with hashed password
-
         const user = await User.create({ email, password_hash: password, role });
 
         res.json({ message: 'User registered successfully', user });

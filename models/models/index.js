@@ -57,7 +57,13 @@ Payment.belongsTo(User, { foreignKey: 'user_id' });
 Appointment.hasMany(Payment, { foreignKey: 'appointment_id' });
 Payment.belongsTo(Appointment, { foreignKey: 'appointment_id' });
 
-//sequelize.sync();
+if (env === 'development' || env === 'test') {
+    sequelize.sync({ force: true }).then(() => {
+        console.log('Tables created');
+    }).catch(error => {
+        console.error('Unable to create tables:', error);
+    });
+}
 
 module.exports = {
     sequelize,

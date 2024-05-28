@@ -13,10 +13,16 @@ const messageRoutes = require('./routes/message');
 
 const setupSwagger = require('./swagger');
 
-
+const cors = require('cors');
 require('./config/passport');
 
 const app = express();
+
+if (process.env.NODE_ENV === 'development') {
+  app.use(cors({
+    origin: 'http://localhost:3000',
+  }));
+}
 
 app.use(bodyParser.json());
 app.use(passport.initialize());
@@ -31,20 +37,25 @@ app.use('/dashboard', dashboardRoutes);
 app.use('/admin', adminRoutes);
 app.use('/message', messageRoutes); // Add this line
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 4000;
 
-//sequelize.sync().then(() => {
-//    app.listen(PORT, () => {
-//        console.log(`Server is running on port ${PORT}`);
-//    });
-//});
+if(process.env.NODE_ENV === 'dev') {
+  
+  
+ sequelize.sync().then(() => {
+  setupSwagger(app);
+    app.listen(PORT, () => {
+        console.log(`Server is running on port ${PORT}`);
+    });
+});
+}else if (process.env.NODE_ENV !== 'test'){
 
-
-
-if (process.env.NODE_ENV !== 'test') {
-    setupSwagger(app);
+  setupSwagger(app);
     app.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
     });
-  }
+
+}
+
+
 module.exports = app;
