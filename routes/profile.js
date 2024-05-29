@@ -9,6 +9,8 @@ const router = express.Router();
  * /profile:
  *   get:
  *     summary: Get user profile
+ *     tags:
+ *       - Profile
  *     security:
  *       - bearerAuth: []
  *     responses:
@@ -70,6 +72,8 @@ router.get('/', passport.authenticate('jwt', { session: false }), async (req, re
  * /profile:
  *   put:
  *     summary: Update or create user profile
+ *     tags:
+ *       - Profile
  *     security:
  *       - bearerAuth: []
  *     requestBody:

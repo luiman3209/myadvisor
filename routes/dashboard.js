@@ -10,6 +10,8 @@ const router = express.Router();
  * /dashboard/user:
  *   get:
  *     summary: User Dashboard - Overview of user’s upcoming appointments, booked advisors, and recent activity
+ *     tags:
+ *       - Dashboard
  *     security:
  *       - bearerAuth: []
  *     responses:
@@ -179,6 +181,8 @@ router.get('/user', passport.authenticate('jwt', { session: false }), async (req
  * /dashboard/advisor:
  *   get:
  *     summary: Advisor Dashboard - Overview of advisor’s upcoming appointments, client interactions, and profile views
+ *     tags:
+ *       - Dashboard
  *     security:
  *       - bearerAuth: []
  *     responses:

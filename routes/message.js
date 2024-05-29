@@ -10,6 +10,8 @@ const router = express.Router();
  * /messages:
  *   post:
  *     summary: Send a message
+ *     tags:
+ *       - Message
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -88,6 +90,8 @@ router.post('/', passport.authenticate('jwt', { session: false }), async (req, r
  * /messages/{receiver_id}:
  *   get:
  *     summary: Get messages between two users
+ *     tags:
+ *       - Message
  *     security:
  *       - bearerAuth: []
  *     parameters:
