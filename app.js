@@ -27,15 +27,15 @@ if (process.env.NODE_ENV === 'development') {
 app.use(bodyParser.json());
 app.use(passport.initialize());
 
-app.use('/auth', authRoutes);
-app.use('/profile', profileRoutes);
-app.use('/search', searchRoutes);
-app.use('/advisor', advisorRoutes);
-app.use('/appointment', appointmentRoutes);
-app.use('/dashboard', dashboardRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/profile', profileRoutes);
+app.use('/api/search', searchRoutes);
+app.use('/api/advisor', advisorRoutes);
+app.use('/api/appointment', appointmentRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 //app.use('/payment', paymentRoutes);
-app.use('/admin', adminRoutes);
-app.use('/message', messageRoutes); // Add this line
+app.use('/api/admin', adminRoutes);
+app.use('/api/message', messageRoutes); // Add this line
 
 const PORT = process.env.PORT || 4000;
 
