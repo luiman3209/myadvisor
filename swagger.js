@@ -14,6 +14,7 @@ const options = {
       { name: 'Auth', description: 'Authentication endpoints' },
       { name: 'Admin', description: 'Admin endpoints' },
       { name: 'Advisor', description: 'Advisor endpoints' },
+      { name: 'Investor', description: 'Investor endpoints' },
       { name: 'Appointment', description: 'Appointment endpoints' },
       { name: 'Dashboard', description: 'Dashboard endpoints' },
       { name: 'Messages', description: 'Messages endpoints' },

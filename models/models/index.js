@@ -22,6 +22,7 @@ if (config.use_env_variable) {
 const User = require('./user')(sequelize);
 const Profile = require('./profile')(sequelize);
 const Advisor = require('./advisor')(sequelize);
+const Investor = require('./investor')(sequelize);
 
 const Appointment = require('./appointment')(sequelize);
 const Review = require('./review')(sequelize);
@@ -33,6 +34,9 @@ Profile.belongsTo(User, { foreignKey: 'user_id' });
 
 User.hasOne(Advisor, { foreignKey: 'user_id' });
 Advisor.belongsTo(User, { foreignKey: 'user_id' });
+
+User.hasOne(Investor, { foreignKey: 'user_id' });
+Investor.belongsTo(User, { foreignKey: 'user_id' });
 
 User.hasMany(Appointment, { foreignKey: 'user_id' });
 Appointment.belongsTo(User, { foreignKey: 'user_id' });

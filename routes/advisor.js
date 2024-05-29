@@ -4,6 +4,141 @@ const { Advisor, Review, Profile, User } = require('../models/models');
 
 const router = express.Router();
 
+
+/**
+ * @swagger
+ * /advisor:
+ *   put:
+ *     summary: Create or update an advisor profile
+ *     tags:
+ *       - Advisor
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               user_id:
+ *                 type: integer
+ *                 example: 1
+ *               qualifications:
+ *                 type: string
+ *                 example: "MBA, CFA"
+ *               expertise:
+ *                 type: string
+ *                 example: "Investment Management"
+ *               services_offered:
+ *                 type: string
+ *                 example: "Financial Planning, Tax Planning"
+ *               contact_information:
+ *                 type: string
+ *                 example: "contact@advisor.com"
+ *               start_shift_1:
+ *                 type: string
+ *                 format: date-time
+ *                 example: "2023-05-01T09:00:00Z"
+ *               end_shift_1:
+ *                 type: string
+ *                 format: date-time
+ *                 example: "2023-05-01T17:00:00Z"
+ *               start_shift_2:
+ *                 type: string
+ *                 format: date-time
+ *                 example: "2023-05-01T18:00:00Z"
+ *               end_shift_2:
+ *                 type: string
+ *                 format: date-time
+ *                 example: "2023-05-01T20:00:00Z"
+ *     responses:
+ *       200:
+ *         description: Advisor profile created or updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 advisor:
+ *                   type: object
+ *                   properties:
+ *                     advisor_id:
+ *                       type: integer
+ *                     user_id:
+ *                       type: integer
+ *                     qualifications:
+ *                       type: string
+ *                     expertise:
+ *                       type: string
+ *                     services_offered:
+ *                       type: string
+ *                     contact_information:
+ *                       type: string
+ *                     start_shift_1:
+ *                       type: string
+ *                       format: date-time
+ *                     end_shift_1:
+ *                       type: string
+ *                       format: date-time
+ *                     start_shift_2:
+ *                       type: string
+ *                       format: date-time
+ *                     end_shift_2:
+ *                       type: string
+ *                       format: date-time
+ *                     profile_views:
+ *                       type: integer
+ *       400:
+ *         description: Invalid input data
+ *       500:
+ *         description: Server error
+ */
+
+router.put('/', passport.authenticate('jwt', { session: false }), async (req, res) => {
+    const { qualifications, expertise, services_offered, contact_information, start_shift_1, end_shift_1, start_shift_2, end_shift_2 } = req.body;
+    const user_id = req.user.id;
+    if (!user_id || !qualifications || !expertise || !services_offered || !contact_information || !start_shift_1 || !end_shift_1) {
+        return res.status(400).json({ message: 'Missing required fields' });
+    }
+
+    try {
+        let advisor = await Advisor.findOne({ where: { user_id } });
+
+        if (advisor) {
+            // Update existing advisor
+            advisor.qualifications = qualifications;
+            advisor.expertise = expertise;
+            advisor.services_offered = services_offered;
+            advisor.contact_information = contact_information;
+            advisor.start_shift_1 = start_shift_1;
+            advisor.end_shift_1 = end_shift_1;
+            advisor.start_shift_2 = start_shift_2;
+            advisor.end_shift_2 = end_shift_2;
+            advisor.updated_at = new Date();
+        } else {
+            // Create new advisor
+            advisor = await Advisor.create({
+                user_id,
+                qualifications,
+                expertise,
+                services_offered,
+                contact_information,
+                start_shift_1,
+                end_shift_1,
+                start_shift_2,
+                end_shift_2
+            });
+        }
+
+        await advisor.save();
+        res.json({ message: 'Advisor profile created or updated successfully', advisor });
+
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 /**
  * @swagger
  * /advisor:
