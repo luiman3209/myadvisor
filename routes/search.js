@@ -10,7 +10,7 @@ const router = express.Router();
  *   get:
  *     summary: Search for financial advisors based on location, expertise, and services offered
  *     tags:
- *       - Profile
+ *       - Search
  *     parameters:
  *       - in: query
  *         name: location

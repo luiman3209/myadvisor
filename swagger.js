@@ -6,9 +6,9 @@ const options = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'Admin API',
+      title: 'MyAdcisor API',
       version: '1.0.0',
-      description: 'API documentation for the admin routes',
+      description: 'API documentation for the MyAdcisor API',
     },
     tags: [
       { name: 'Auth', description: 'Authentication endpoints' },
