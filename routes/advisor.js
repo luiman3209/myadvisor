@@ -52,6 +52,9 @@ const router = express.Router();
  *                 items:
  *                   type: integer
  *                 example: [1, 2, 3]
+ *               operating_country_code:
+ *                 type: string
+ *                 example: "US"
  *     responses:
  *       200:
  *         description: Advisor profile created or updated successfully
@@ -89,6 +92,8 @@ const router = express.Router();
  *                       format: date-time
  *                     profile_views:
  *                       type: integer
+ *                     operating_country_code:
+ *                       type: string
  *       400:
  *         description: Invalid input data
  *       500:
@@ -96,9 +101,9 @@ const router = express.Router();
  */
 
 router.put('/', passport.authenticate('jwt', { session: false }), async (req, res) => {
-    const { qualifications, expertise, contact_information, start_shift_1, end_shift_1, start_shift_2, end_shift_2, selected_service_types } = req.body;
+    const { qualifications, expertise, contact_information, start_shift_1, end_shift_1, start_shift_2, end_shift_2, selected_service_types, operating_country_code } = req.body;
     const user_id = req.user.id;
-    if (!user_id || !qualifications || !expertise || !contact_information || !start_shift_1 || !end_shift_1) {
+    if (!user_id || !qualifications || !expertise || !contact_information || !start_shift_1 || !end_shift_1 || !operating_country_code) {
         return res.status(400).json({ message: 'Missing required fields' });
     }
 
@@ -114,6 +119,7 @@ router.put('/', passport.authenticate('jwt', { session: false }), async (req, re
             advisor.end_shift_1 = end_shift_1;
             advisor.start_shift_2 = start_shift_2;
             advisor.end_shift_2 = end_shift_2;
+            advisor.operating_country_code = operating_country_code;
             advisor.updated_at = new Date();
         } else {
             // Create new advisor
@@ -125,7 +131,8 @@ router.put('/', passport.authenticate('jwt', { session: false }), async (req, re
                 start_shift_1,
                 end_shift_1,
                 start_shift_2,
-                end_shift_2
+                end_shift_2,
+                operating_country_code
             });
         }
 

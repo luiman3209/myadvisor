@@ -3,55 +3,26 @@ const { Op } = require('sequelize');
 const { Advisor, Profile, Review } = require('../models/models');
 
 const router = express.Router();
-
 /**
  * @swagger
  * /search/advisors:
  *   get:
- *     summary: Search for financial advisors based on location, expertise, and services offered
+ *     summary: Search for financial advisors based on country code and service ID
  *     tags:
  *       - Search
  *     parameters:
  *       - in: query
- *         name: location
+ *         name: operating_country_code
  *         schema:
  *           type: string
- *         description: Filter by location
- *         example: "New York"
+ *         description: Filter by operating country code
+ *         example: "US"
  *       - in: query
- *         name: expertise
- *         schema:
- *           type: string
- *         description: Filter by expertise
- *         example: "Retirement Planning"
- *       - in: query
- *         name: services
- *         schema:
- *           type: string
- *         description: Filter by services offered
- *         example: "Tax Planning"
- *       - in: query
- *         name: rating_min
+ *         name: service_id
  *         schema:
  *           type: integer
- *         description: Minimum rating
- *         example: 3
- *       - in: query
- *         name: rating_max
- *         schema:
- *           type: integer
- *         description: Maximum rating
- *         example: 5
- *       - in: query
- *         name: price_min
- *         schema:
- *           type: integer
- *         description: Minimum price
- *       - in: query
- *         name: price_max
- *         schema:
- *           type: integer
- *         description: Maximum price
+ *         description: Filter by service ID
+ *         example: 1
  *     responses:
  *       200:
  *         description: A list of financial advisors matching the search criteria
@@ -62,41 +33,30 @@ const router = express.Router();
  *               items:
  *                 type: object
  *                 properties:
- *                   id:
+ *                   advisor_id:
  *                     type: integer
  *                     example: 1
  *                   user_id:
  *                     type: integer
  *                     example: 1
- *                   location:
+ *                   operating_country_code:
  *                     type: string
- *                     example: "New York"
+ *                     example: "US"
+ *                   qualifications:
+ *                     type: string
+ *                     example: "MBA, CFA"
  *                   expertise:
  *                     type: string
- *                     example: "Retirement Planning"
- *                   Profile:
- *                     type: object
- *                     properties:
- *                       first_name:
- *                         type: string
- *                         example: "John"
- *                       last_name:
- *                         type: string
- *                         example: "Doe"
- *                       phone_number:
- *                         type: string
- *                         example: "123-456-7890"
- *                       address:
- *                         type: string
- *                         example: "123 Main St"
- *                   Reviews:
- *                     type: array
- *                     items:
- *                       type: object
- *                       properties:
- *                         rating:
- *                           type: integer
- *                           example: 4
+ *                     example: "Investment Management"
+ *                   contact_information:
+ *                     type: string
+ *                     example: "contact@advisor.com"
+ *                   name:
+ *                     type: string
+ *                     example: "John"
+ *                   surname:
+ *                     type: string
+ *                     example: "Doe"
  *       500:
  *         description: Internal server error
  *         content:
@@ -110,39 +70,42 @@ const router = express.Router();
  */
 router.get('/advisors', async (req, res) => {
     try {
-        const { location, expertise, services, rating_min, rating_max, price_min, price_max } = req.query;
-
-        const filters = {};
-
-        if (location) {
-            filters.location = { [Op.iLike]: `%${location}%` };
-        }
-
-        if (expertise) {
-            filters.expertise = { [Op.iLike]: `%${expertise}%` };
-        }
-
-        const advisors = await Advisor.findAll({
-            where: filters,
-            include: [{
-                model: Profile,
-                required: true,
-            }, {
-                model: Review,
-                required: false,
-                attributes: ['rating'],
-                where: rating_min || rating_max ? {
-                    rating: {
-                        [Op.between]: [rating_min || 1, rating_max || 5],
-                    },
-                } : {},
-            }],
-        });
-
-        res.json(advisors);
+      const { operating_country_code, service_id } = req.query;
+  
+      if (!operating_country_code && !service_id) {
+        return res.status(400).json({ message: 'At least one of operating_country_code or service_id must be provided' });
+      }
+  
+      const filters = {};
+  
+      if (operating_country_code) {
+        filters.operating_country_code = operating_country_code;
+      }
+  
+      const includeServices = service_id ? {
+        model: ServiceType,
+        through: {
+          where: { service_id },
+        },
+      } : null;
+  
+      const advisors = await Advisor.findAll({
+        where: filters,
+        include: [
+          includeServices,
+          {
+            model: Profile,
+            attributes: ['first_name', 'last_name'],
+            required: true,
+          },
+        ].filter(Boolean), // Filter out null includes
+      });
+  
+      res.json(advisors);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+      res.status(500).json({ error: error.message });
     }
-});
+  });
+
 
 module.exports = router;

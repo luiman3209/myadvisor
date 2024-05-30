@@ -33,6 +33,7 @@ Profile.belongsTo(User, { foreignKey: 'user_id' });
 
 User.hasOne(Advisor, { foreignKey: 'user_id' });
 Advisor.belongsTo(User, { foreignKey: 'user_id' });
+Advisor.belongsTo(Profile, { foreignKey: 'user_id' });  // Ensure association with Profile
 
 User.hasOne(Investor, { foreignKey: 'user_id' });
 Investor.belongsTo(User, { foreignKey: 'user_id' });
@@ -60,7 +61,6 @@ Payment.belongsTo(User, { foreignKey: 'user_id' });
 Appointment.hasMany(Payment, { foreignKey: 'appointment_id' });
 Payment.belongsTo(Appointment, { foreignKey: 'appointment_id' });
 
-
 Advisor.belongsToMany(ServiceType, { through: AdvisorService, foreignKey: 'advisor_id' });
 ServiceType.belongsToMany(Advisor, { through: AdvisorService, foreignKey: 'service_id' });
 
@@ -69,8 +69,6 @@ ServiceType.belongsToMany(Investor, { through: InvestorService, foreignKey: 'ser
 
 if (env === 'development' || env === 'test') {
     sequelize.sync({ force: true }).then(() => {
-
-
         console.log('Tables created');
     }).catch(error => {
         console.error('Unable to create tables:', error);
