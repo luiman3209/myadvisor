@@ -77,6 +77,8 @@ CREATE TABLE advisors (
     user_id INT REFERENCES user_configs(user_id) ON DELETE CASCADE,
     qualifications TEXT,
     expertise TEXT,
+    office_address  NOT NULL TEXT,
+    operating_city_code TEXT NOT NULL,
     operating_country_code TEXT NOT NULL,
     contact_information TEXT,
     start_shift_1 TIMESTAMP NOT NULL,

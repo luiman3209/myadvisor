@@ -178,16 +178,21 @@ router.put('/', passport.authenticate('jwt', { session: false }), async (req, re
     const { first_name, last_name, phone_number, address, preferences, visibility } = req.body;
     let profile = await Profile.findOne({ where: { user_id: req.user.id } });
     if (!profile) {
-        // Create new profile if not found
-        profile = await Profile.create({
-            user_id: req.user.id,
-            first_name,
-            last_name,
-            phone_number,
-            address,
-            preferences,
-            visibility
-        });
+        try {
+            // Create new profile if not found
+            profile = await Profile.create({
+                user_id: req.user.id,
+                first_name,
+                last_name,
+                phone_number,
+                address,
+                preferences,
+                visibility
+            });
+        } catch (e) {
+            res.status(400).json({ message: 'Error saving profile info', error: e })
+        }
+
         return res.status(200).json({ message: 'Profile created successfully', profile });
     }
 

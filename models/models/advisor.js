@@ -15,6 +15,14 @@ module.exports = (sequelize) => {
             },
             onDelete: 'CASCADE',
         },
+        office_address: {
+            type: DataTypes.TEXT,
+            allowNull: false,
+        },
+        operating_city_code: {
+            type: DataTypes.TEXT,
+            allowNull: false,
+        },
         operating_country_code: {
             type: DataTypes.TEXT,
             allowNull: false,

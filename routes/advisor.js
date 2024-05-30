@@ -5,6 +5,7 @@ const { ServiceType, AdvisorService } = require('../models/models');
 const router = express.Router();
 
 
+
 /**
  * @swagger
  * /advisor:
@@ -55,6 +56,12 @@ const router = express.Router();
  *               operating_country_code:
  *                 type: string
  *                 example: "US"
+ *               office_address:
+ *                 type: string
+ *                 example: "123 Main St, Suite 400"
+ *               operating_city_code:
+ *                 type: string
+ *                 example: "NYC"
  *     responses:
  *       200:
  *         description: Advisor profile created or updated successfully
@@ -94,6 +101,10 @@ const router = express.Router();
  *                       type: integer
  *                     operating_country_code:
  *                       type: string
+ *                     office_address:
+ *                       type: string
+ *                     operating_city_code:
+ *                       type: string
  *       400:
  *         description: Invalid input data
  *       500:
@@ -101,9 +112,21 @@ const router = express.Router();
  */
 
 router.put('/', passport.authenticate('jwt', { session: false }), async (req, res) => {
-    const { qualifications, expertise, contact_information, start_shift_1, end_shift_1, start_shift_2, end_shift_2, selected_service_types, operating_country_code } = req.body;
+    const {
+        qualifications,
+        expertise,
+        contact_information,
+        start_shift_1,
+        end_shift_1,
+        start_shift_2,
+        end_shift_2,
+        selected_service_types,
+        operating_country_code,
+        office_address,
+        operating_city_code
+    } = req.body;
     const user_id = req.user.id;
-    if (!user_id || !qualifications || !expertise || !contact_information || !start_shift_1 || !end_shift_1 || !operating_country_code) {
+    if (!user_id || !qualifications || !expertise || !contact_information || !start_shift_1 || !end_shift_1 || !operating_country_code || !office_address || !operating_city_code) {
         return res.status(400).json({ message: 'Missing required fields' });
     }
 
@@ -120,6 +143,8 @@ router.put('/', passport.authenticate('jwt', { session: false }), async (req, re
             advisor.start_shift_2 = start_shift_2;
             advisor.end_shift_2 = end_shift_2;
             advisor.operating_country_code = operating_country_code;
+            advisor.office_address = office_address;
+            advisor.operating_city_code = operating_city_code;
             advisor.updated_at = new Date();
         } else {
             // Create new advisor
@@ -132,7 +157,9 @@ router.put('/', passport.authenticate('jwt', { session: false }), async (req, re
                 end_shift_1,
                 start_shift_2,
                 end_shift_2,
-                operating_country_code
+                operating_country_code,
+                office_address,
+                operating_city_code
             });
         }
 
@@ -241,7 +268,6 @@ router.get('/', passport.authenticate('jwt', { session: false }), async (req, re
         const serviceIds = advisorServices.map(as => as.service_id);
         const serviceTypes = await ServiceType.findAll({ where: { service_id: serviceIds } });
 
-        console.log('Reviews and service types loaded');
         res.json({
             advisor,
             profileReviews,
@@ -251,16 +277,17 @@ router.get('/', passport.authenticate('jwt', { session: false }), async (req, re
         res.status(500).json({ error: error.message });
     }
 });
+
 /**
  * @swagger
- * /advisor/{advisorId}:
+ * /{advisor_id}:
  *   get:
  *     summary: Get detailed advisor profile by ID
  *     tags:
  *       - Advisor
  *     parameters:
  *       - in: path
- *         name: advisorId
+ *         name: advisor_id
  *         required: true
  *         schema:
  *           type: integer
@@ -276,15 +303,42 @@ router.get('/', passport.authenticate('jwt', { session: false }), async (req, re
  *                 advisor:
  *                   type: object
  *                   properties:
- *                     id:
+ *                     advisor_id:
  *                       type: integer
  *                       example: 1
  *                     user_id:
  *                       type: integer
  *                       example: 1
- *                     specialty:
+ *                     operating_country_code:
  *                       type: string
- *                       example: Financial Advisor
+ *                       example: "US"
+ *                     qualifications:
+ *                       type: string
+ *                       example: "MBA, CFA"
+ *                     expertise:
+ *                       type: string
+ *                       example: "Investment Management"
+ *                     contact_information:
+ *                       type: string
+ *                       example: "contact@advisor.com"
+ *                     start_shift_1:
+ *                       type: string
+ *                       format: date-time
+ *                     end_shift_1:
+ *                       type: string
+ *                       format: date-time
+ *                     start_shift_2:
+ *                       type: string
+ *                       format: date-time
+ *                     end_shift_2:
+ *                       type: string
+ *                       format: date-time
+ *                     profile_views:
+ *                       type: integer
+ *                       example: 0
+ *                     is_verified:
+ *                       type: string
+ *                       example: "N"
  *                 profileReviews:
  *                   type: array
  *                   items:
@@ -322,33 +376,38 @@ router.get('/', passport.authenticate('jwt', { session: false }), async (req, re
  *                       is_active:
  *                         type: string
  *                         example: "Y"
+ *       404:
+ *         description: Advisor not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Internal server error"
  */
-router.get('/:advisorId', passport.authenticate('jwt', { session: false }), async (req, res) => {
+router.get('/:advisor_id', async (req, res) => {
     try {
-        const advisor = await Advisor.findByPk(req.params.advisorId, {
-            include: [
-                {
-                    model: Profile,
-                    include: [{ model: User, attributes: ['email', 'created_at'] }],
-                },
-                {
-                    model: Review,
-                    include: [{ model: User, attributes: ['email'] }],
-                },
-            ],
-        });
+        const { advisor_id } = req.params;
+
+        // Find the advisor by ID
+        const advisor = await Advisor.findByPk(advisor_id);
 
         if (!advisor) {
             return res.status(404).json({ message: 'Advisor not found' });
         }
 
+        // Fetch reviews for the advisor
         const profileReviews = await Review.findAll({
-            where: { advisor_id: req.params.advisorId },
+            where: { advisor_id },
             include: [{ model: User, attributes: ['email'] }],
         });
 
         // Fetch service types for the advisor
-        const advisorServices = await AdvisorService.findAll({ where: { advisor_id: req.params.advisorId } });
+        const advisorServices = await AdvisorService.findAll({ where: { advisor_id } });
         const serviceIds = advisorServices.map(as => as.service_id);
         const serviceTypes = await ServiceType.findAll({ where: { service_id: serviceIds } });
 
