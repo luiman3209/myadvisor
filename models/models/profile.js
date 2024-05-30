@@ -20,7 +20,6 @@ module.exports = (sequelize) => {
         phone_number: DataTypes.STRING,
         address: DataTypes.TEXT,
         preferences: DataTypes.TEXT,
-        financial_goals: DataTypes.TEXT,
         visibility: {
             type: DataTypes.STRING,
             allowNull: false,
