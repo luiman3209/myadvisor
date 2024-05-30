@@ -53,7 +53,6 @@ describe('Profile Routes', () => {
                 phone_number: '1234567890',
                 address: '123 Main St',
                 preferences: 'Sample preferences',
-                financial_goals: 'Sample goals',
                 visibility: true
             };
 
@@ -76,7 +75,6 @@ describe('Profile Routes', () => {
                 phone_number: '1234567890',
                 address: '123 Main St',
                 preferences: 'Sample preferences',
-                financial_goals: 'Sample goals',
                 visibility: true
             };
 

@@ -1,7 +1,7 @@
 const express = require('express');
 const passport = require('passport');
 const { Advisor, Review, Profile, User } = require('../models/models');
-
+const { ServiceType, AdvisorService } = require('../models/models');
 const router = express.Router();
 
 
@@ -28,9 +28,6 @@ const router = express.Router();
  *               expertise:
  *                 type: string
  *                 example: "Investment Management"
- *               services_offered:
- *                 type: string
- *                 example: "Financial Planning, Tax Planning"
  *               contact_information:
  *                 type: string
  *                 example: "contact@advisor.com"
@@ -50,6 +47,11 @@ const router = express.Router();
  *                 type: string
  *                 format: date-time
  *                 example: "2023-05-01T20:00:00Z"
+ *               selected_service_types:
+ *                 type: array
+ *                 items:
+ *                   type: integer
+ *                 example: [1, 2, 3]
  *     responses:
  *       200:
  *         description: Advisor profile created or updated successfully
@@ -70,8 +72,6 @@ const router = express.Router();
  *                     qualifications:
  *                       type: string
  *                     expertise:
- *                       type: string
- *                     services_offered:
  *                       type: string
  *                     contact_information:
  *                       type: string
@@ -96,9 +96,9 @@ const router = express.Router();
  */
 
 router.put('/', passport.authenticate('jwt', { session: false }), async (req, res) => {
-    const { qualifications, expertise, services_offered, contact_information, start_shift_1, end_shift_1, start_shift_2, end_shift_2 } = req.body;
+    const { qualifications, expertise, contact_information, start_shift_1, end_shift_1, start_shift_2, end_shift_2, selected_service_types } = req.body;
     const user_id = req.user.id;
-    if (!user_id || !qualifications || !expertise || !services_offered || !contact_information || !start_shift_1 || !end_shift_1) {
+    if (!user_id || !qualifications || !expertise || !contact_information || !start_shift_1 || !end_shift_1) {
         return res.status(400).json({ message: 'Missing required fields' });
     }
 
@@ -109,7 +109,6 @@ router.put('/', passport.authenticate('jwt', { session: false }), async (req, re
             // Update existing advisor
             advisor.qualifications = qualifications;
             advisor.expertise = expertise;
-            advisor.services_offered = services_offered;
             advisor.contact_information = contact_information;
             advisor.start_shift_1 = start_shift_1;
             advisor.end_shift_1 = end_shift_1;
@@ -122,7 +121,6 @@ router.put('/', passport.authenticate('jwt', { session: false }), async (req, re
                 user_id,
                 qualifications,
                 expertise,
-                services_offered,
                 contact_information,
                 start_shift_1,
                 end_shift_1,
@@ -132,6 +130,17 @@ router.put('/', passport.authenticate('jwt', { session: false }), async (req, re
         }
 
         await advisor.save();
+
+        // Update advisor service types
+        if (selected_service_types && Array.isArray(selected_service_types)) {
+            await AdvisorService.destroy({ where: { advisor_id: advisor.advisor_id } });
+            const advisorServices = selected_service_types.map(service_id => ({
+                advisor_id: advisor.advisor_id,
+                service_id
+            }));
+            await AdvisorService.bulkCreate(advisorServices);
+        }
+
         res.json({ message: 'Advisor profile created or updated successfully', advisor });
 
     } catch (error) {
@@ -186,23 +195,29 @@ router.put('/', passport.authenticate('jwt', { session: false }), async (req, re
  *                       rating:
  *                         type: integer
  *                         example: 5
+ *                 serviceTypes:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       service_id:
+ *                         type: integer
+ *                         example: 1
+ *                       service_type_name:
+ *                         type: string
+ *                         example: "Financial Planning"
+ *                       service_type_code:
+ *                         type: string
+ *                         example: "FP"
+ *                       is_active:
+ *                         type: string
+ *                         example: "Y"
  */
-router.get('/', async (req, res) => {
+router.get('/', passport.authenticate('jwt', { session: false }), async (req, res) => {
     try {
+        console.log('Advisor detail requested');
         // Find the advisor using the user_id
-        const advisor = await Advisor.findOne({
-            where: { user_id: req.user.id },
-            include: [
-                {
-                    model: Profile,
-                    include: [{ model: User, attributes: ['email', 'created_at'] }],
-                },
-                {
-                    model: Review,
-                    include: [{ model: User, attributes: ['email'] }],
-                },
-            ],
-        });
+        const advisor = await Advisor.findOne({ where: { user_id: req.user.id } });
 
         if (!advisor) {
             return res.status(404).json({ message: 'Advisor not found' });
@@ -210,19 +225,25 @@ router.get('/', async (req, res) => {
 
         // Fetch reviews for the advisor
         const profileReviews = await Review.findAll({
-            where: { advisor_id: advisor.id }, // Assuming the Review model has advisor_id that refers to Advisor model
+            where: { advisor_id: advisor.advisor_id }, // Assuming the Review model has advisor_id that refers to Advisor model
             include: [{ model: User, attributes: ['email'] }],
         });
 
+        // Fetch service types for the advisor
+        const advisorServices = await AdvisorService.findAll({ where: { advisor_id: advisor.advisor_id } });
+        const serviceIds = advisorServices.map(as => as.service_id);
+        const serviceTypes = await ServiceType.findAll({ where: { service_id: serviceIds } });
+
+        console.log('Reviews and service types loaded');
         res.json({
             advisor,
             profileReviews,
+            serviceTypes,
         });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
-
 /**
  * @swagger
  * /advisor/{advisorId}:
@@ -277,8 +298,25 @@ router.get('/', async (req, res) => {
  *                       rating:
  *                         type: integer
  *                         example: 5
+ *                 serviceTypes:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       service_id:
+ *                         type: integer
+ *                         example: 1
+ *                       service_type_name:
+ *                         type: string
+ *                         example: "Financial Planning"
+ *                       service_type_code:
+ *                         type: string
+ *                         example: "FP"
+ *                       is_active:
+ *                         type: string
+ *                         example: "Y"
  */
-router.get('/:advisorId', async (req, res) => {
+router.get('/:advisorId', passport.authenticate('jwt', { session: false }), async (req, res) => {
     try {
         const advisor = await Advisor.findByPk(req.params.advisorId, {
             include: [
@@ -302,9 +340,15 @@ router.get('/:advisorId', async (req, res) => {
             include: [{ model: User, attributes: ['email'] }],
         });
 
+        // Fetch service types for the advisor
+        const advisorServices = await AdvisorService.findAll({ where: { advisor_id: req.params.advisorId } });
+        const serviceIds = advisorServices.map(as => as.service_id);
+        const serviceTypes = await ServiceType.findAll({ where: { service_id: serviceIds } });
+
         res.json({
             advisor,
             profileReviews,
+            serviceTypes,
         });
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -421,7 +465,7 @@ router.post('/:advisorId/review', passport.authenticate('jwt', { session: false 
  *         description: Advisor not found
  */
 
-router.get('/:advisorId/contact', async (req, res) => {
+router.get('/:advisorId/contact', passport.authenticate('jwt', { session: false }), async (req, res) => {
     try {
         const advisor = await Advisor.findByPk(req.params.advisorId, {
             include: [{ model: User, attributes: ['email'] }],

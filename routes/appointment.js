@@ -328,7 +328,7 @@ router.put('/:appointmentId/status', passport.authenticate('jwt', { session: fal
  *                         format: date-time
  *                         example: '2023-01-01T16:00:00Z'
  */
-router.get('/free-windows/:advisorId', async (req, res) => {
+router.get('/free-windows/:advisorId', passport.authenticate('jwt', { session: false }), async (req, res) => {
     try {
         const advisorId = req.params.advisorId;
 

@@ -1,6 +1,7 @@
 const express = require('express');
 const passport = require('passport');
 const { Investor, User } = require('../models/models');
+const { ServiceType,  InvestorService } = require('../models/models');
 
 const router = express.Router();
 
@@ -27,12 +28,14 @@ const router = express.Router();
  *               income_range:
  *                 type: string
  *                 example: "75000-99999"
- *               financial_goals:
- *                 type: string
- *                 example: "retirement_planning"
  *               geo_preferences:
  *                 type: string
  *                 example: "North America"
+ *               selected_service_types:
+ *                 type: array
+ *                 items:
+ *                   type: integer
+ *                 example: [1, 2, 3]
  *     responses:
  *       200:
  *         description: Investor profile created or updated successfully
@@ -54,8 +57,6 @@ const router = express.Router();
  *                       type: string
  *                     income_range:
  *                       type: string
- *                     financial_goals:
- *                       type: string
  *                     geo_preferences:
  *                       type: string
  *       400:
@@ -65,11 +66,10 @@ const router = express.Router();
  */
 
 router.put('/', passport.authenticate('jwt', { session: false }), async (req, res) => {
-    const {net_worth, income_range, financial_goals, geo_preferences } = req.body;
-
+    const { net_worth, income_range, geo_preferences, selected_service_types } = req.body;
     const user_id = req.user.id;
 
-    if (!user_id || !net_worth || !income_range || !financial_goals) {
+    if (!user_id || !net_worth || !income_range) {
         return res.status(400).json({ message: 'Missing required fields' });
     }
 
@@ -80,7 +80,6 @@ router.put('/', passport.authenticate('jwt', { session: false }), async (req, re
             // Update existing investor
             investor.net_worth = net_worth;
             investor.income_range = income_range;
-            investor.financial_goals = financial_goals;
             investor.geo_preferences = geo_preferences;
             investor.updated_at = new Date();
         } else {
@@ -89,12 +88,22 @@ router.put('/', passport.authenticate('jwt', { session: false }), async (req, re
                 user_id,
                 net_worth,
                 income_range,
-                financial_goals,
                 geo_preferences
             });
         }
 
         await investor.save();
+
+        // Update investor service types
+        if (selected_service_types && Array.isArray(selected_service_types)) {
+            await InvestorService.destroy({ where: { investor_id: investor.investor_id } });
+            const investorServices = selected_service_types.map(service_id => ({
+                investor_id: investor.investor_id,
+                service_id
+            }));
+            await InvestorService.bulkCreate(investorServices);
+        }
+
         res.json({ message: 'Investor profile created or updated successfully', investor });
 
     } catch (error) {
@@ -132,12 +141,26 @@ router.put('/', passport.authenticate('jwt', { session: false }), async (req, re
  *                     income_range:
  *                       type: string
  *                       example: "75000-99999"
- *                     financial_goals:
- *                       type: string
- *                       example: "retirement_planning"
  *                     geo_preferences:
  *                       type: string
  *                       example: "North America"
+ *                 serviceTypes:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       service_id:
+ *                         type: integer
+ *                         example: 1
+ *                       service_type_name:
+ *                         type: string
+ *                         example: "Financial Planning"
+ *                       service_type_code:
+ *                         type: string
+ *                         example: "FP"
+ *                       is_active:
+ *                         type: string
+ *                         example: "Y"
  */
 router.get('/', passport.authenticate('jwt', { session: false }), async (req, res) => {
     try {
@@ -150,7 +173,12 @@ router.get('/', passport.authenticate('jwt', { session: false }), async (req, re
             return res.status(404).json({ message: 'Investor not found' });
         }
 
-        res.json({ investor });
+        // Fetch service types for the investor
+        const investorServices = await InvestorService.findAll({ where: { investor_id: investor.investor_id } });
+        const serviceIds = investorServices.map(is => is.service_id);
+        const serviceTypes = await ServiceType.findAll({ where: { service_id: serviceIds } });
+
+        res.json({ investor, serviceTypes });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -193,15 +221,31 @@ router.get('/', passport.authenticate('jwt', { session: false }), async (req, re
  *                     income_range:
  *                       type: string
  *                       example: "75000-99999"
- *                     financial_goals:
- *                       type: string
- *                       example: "retirement_planning"
  *                     geo_preferences:
  *                       type: string
  *                       example: "North America"
+ *                 serviceTypes:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       service_id:
+ *                         type: integer
+ *                         example: 1
+ *                       service_type_name:
+ *                         type: string
+ *                         example: "Financial Planning"
+ *                       service_type_code:
+ *                         type: string
+ *                         example: "FP"
+ *                       is_active:
+ *                         type: string
+ *                         example: "Y"
  */
 router.get('/:investorId', passport.authenticate('jwt', { session: false }), async (req, res) => {
     try {
+        res.status(400).json({ message: 'DISABLED' });
+
         const investor = await Investor.findByPk(req.params.investorId, {
             include: [{ model: User, attributes: ['email', 'created_at'] }],
         });
@@ -210,7 +254,12 @@ router.get('/:investorId', passport.authenticate('jwt', { session: false }), asy
             return res.status(404).json({ message: 'Investor not found' });
         }
 
-        res.json({ investor });
+        // Fetch service types for the investor
+        const investorServices = await InvestorService.findAll({ where: { investor_id: req.params.investorId } });
+        const serviceIds = investorServices.map(is => is.service_id);
+        const serviceTypes = await ServiceType.findAll({ where: { service_id: serviceIds } });
+
+        res.json({ investor, serviceTypes });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

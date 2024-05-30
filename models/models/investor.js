@@ -28,12 +28,6 @@ module.exports = (sequelize) => {
                 isIn: [['<25000', '25000-49999', '50000-74999', '75000-99999', '100000-149999', '150000-199999', '>200000']]
             },
         },
-        financial_goals: {
-            type: DataTypes.STRING(300),
-            validate: {
-                isIn: [['retirement_planning', 'investment_management', 'tax_planning', 'estate_planning', 'insurance_planning', 'education_planning', 'debt_management', 'small_business_planning', 'divorce_planning', 'elder_care_planning', 'charitable_giving_and_philanthropy', 'behavioral_finance', 'wealth_management', 'risk_management', 'financial_education_and_coaching']]
-            },
-        },
         geo_preferences: {
             type: DataTypes.STRING,
         },

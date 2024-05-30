@@ -74,9 +74,6 @@ const router = express.Router();
  *                   expertise:
  *                     type: string
  *                     example: "Retirement Planning"
- *                   services_offered:
- *                     type: string
- *                     example: "Tax Planning"
  *                   Profile:
  *                     type: object
  *                     properties:
@@ -123,10 +120,6 @@ router.get('/advisors', async (req, res) => {
 
         if (expertise) {
             filters.expertise = { [Op.iLike]: `%${expertise}%` };
-        }
-
-        if (services) {
-            filters.services_offered = { [Op.iLike]: `%${services}%` };
         }
 
         const advisors = await Advisor.findAll({

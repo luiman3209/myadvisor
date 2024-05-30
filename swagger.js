@@ -21,6 +21,7 @@ const options = {
       { name: 'Profile', description: 'Profile endpoints' },
       { name: 'Search', description: 'Search endpoints' },
       { name: 'User', description: 'User endpoints' },
+      { name: 'Services', description: 'Services endpoints' },
     ],
   },
   apis: ['./routes/*.js'], // Path to the API docs

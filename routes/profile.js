@@ -42,9 +42,6 @@ const router = express.Router();
  *                 preferences:
  *                   type: string
  *                   example: "Preference details"
- *                 financial_goals:
- *                   type: string
- *                   example: "Financial goals details"
  *                 visibility:
  *                   type: boolean
  *                   example: true
@@ -98,9 +95,6 @@ router.get('/', passport.authenticate('jwt', { session: false }), async (req, re
  *               preferences:
  *                 type: string
  *                 example: "Preference details"
- *               financial_goals:
- *                 type: string
- *                 example: "Financial goals details"
  *               visibility:
  *                 type: boolean
  *                 example: true
@@ -139,9 +133,6 @@ router.get('/', passport.authenticate('jwt', { session: false }), async (req, re
  *                     preferences:
  *                       type: string
  *                       example: "Preference details"
- *                     financial_goals:
- *                       type: string
- *                       example: "Financial goals details"
  *                     visibility:
  *                       type: boolean
  *                       example: true
@@ -179,16 +170,12 @@ router.get('/', passport.authenticate('jwt', { session: false }), async (req, re
  *                     preferences:
  *                       type: string
  *                       example: "Preference details"
- *                     financial_goals:
- *                       type: string
- *                       example: "Financial goals details"
  *                     visibility:
  *                       type: boolean
  *                       example: true
  */
 router.put('/', passport.authenticate('jwt', { session: false }), async (req, res) => {
-    const { first_name, last_name, phone_number, address, preferences, financial_goals, visibility } = req.body;
-
+    const { first_name, last_name, phone_number, address, preferences, visibility } = req.body;
     let profile = await Profile.findOne({ where: { user_id: req.user.id } });
     if (!profile) {
         // Create new profile if not found
@@ -199,14 +186,14 @@ router.put('/', passport.authenticate('jwt', { session: false }), async (req, re
             phone_number,
             address,
             preferences,
-            financial_goals,
             visibility
         });
-        return res.status(201).json({ message: 'Profile created successfully', profile });
+        return res.status(200).json({ message: 'Profile created successfully', profile });
     }
 
     // Update existing profile
-    await profile.update({ first_name, last_name, phone_number, address, preferences, financial_goals, visibility });
+    await profile.update({ first_name, last_name, phone_number, address, preferences, visibility });
+
     res.json({ message: 'Profile updated successfully', profile });
 });
 

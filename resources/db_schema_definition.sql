@@ -1,5 +1,39 @@
 
-select * from user_configs uc ;
+CREATE SEQUENCE appointment_id_seq
+START WITH 1
+INCREMENT BY 1
+NO MINVALUE
+NO MAXVALUE
+CACHE 1;
+
+CREATE SEQUENCE user_id_seq
+START WITH 1
+INCREMENT BY 1
+NO MINVALUE
+NO MAXVALUE
+CACHE 1; 
+
+CREATE SEQUENCE review_id_seq
+START WITH 1
+INCREMENT BY 1
+NO MINVALUE
+NO MAXVALUE
+CACHE 1; 
+
+CREATE SEQUENCE message_id_seq
+START WITH 1
+INCREMENT BY 1
+NO MINVALUE
+NO MAXVALUE
+CACHE 1; 
+
+CREATE SEQUENCE payment_id_seq
+START WITH 1
+INCREMENT BY 1
+NO MINVALUE
+NO MAXVALUE
+CACHE 1
+
 -- user_configs table
 CREATE TABLE user_configs (
     user_id INT PRIMARY KEY DEFAULT nextval('user_id_seq'),
@@ -20,7 +54,7 @@ CREATE TABLE profiles (
     address TEXT,
     preferences TEXT,
     visibility VARCHAR(50) NOT NULL 
-		CHECK (visibility IN ('public', 'private')),
+		CHECK (visibility IN ('public', 'private')) default 'private',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -29,21 +63,6 @@ CREATE TABLE profiles (
 CREATE TABLE investors (
     investor_id SERIAL PRIMARY KEY,
     user_id INT REFERENCES user_configs(user_id) ON DELETE CASCADE,
-    financial_goals varchar(300) check (financial_goals in ("retirement_planning",
-    "investment_management",
-    "tax_planning",
-    "estate_planning",
-    "insurance_planning",
-    "education_planning",
-    "debt_management",
-    "small_business_planning",
-    "divorce_planning",
-    "elder_care_planning",
-    "charitable_giving_and_philanthropy",
-    "behavioral_finance",
-    "wealth_management",
-    "risk_management",
-    "financial_education_and_coaching")),
     net_worth varchar(100) check (net_worth in ('<50000', '50000-99999', '100000-199999', '200000-499999', '500000-999999', '1000000-4999999', '5000000-9999999',
      '10000000-49999999', '50000000-99999999', '100000000-499999999', '500000000-999999999', '>1000000000')),
     income_range VARCHAR(50) CHECK (income_range IN ('<25000', '25000-49999', '50000-74999', '75000-99999', '100000-149999', '150000-199999', '>200000')),
@@ -58,16 +77,44 @@ CREATE TABLE advisors (
     user_id INT REFERENCES user_configs(user_id) ON DELETE CASCADE,
     qualifications TEXT,
     expertise TEXT,
-    services_offered TEXT,
     contact_information TEXT,
     start_shift_1 TIMESTAMP NOT NULL,
     end_shift_1 TIMESTAMP NOT NULL,
     start_shift_2 TIMESTAMP,
     end_shift_2 TIMESTAMP,
+    profile_views INT not null default 0,
+    is_verified VARCHAR(1) not null default 'N',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- [['retirement_planning', 'investment_management', 'tax_planning', 'estate_planning', 'insurance_planning', 
+-- 'education_planning', 'debt_management', 'small_business_planning', 'divorce_planning', 'elder_care_planning', 
+-- 'charitable_giving_and_philanthropy', 'behavioral_finance', 'wealth_management', 'risk_management', 'financial_education_and_coaching']]
+            
+CREATE TABLE service_types (
+    service_id SERIAL PRIMARY KEY,
+    service_type_name TEXT unique not null,
+    service_type_code TEXT unique not null,
+    is_active VARCHAR(1) not null default 'Y',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+CREATE TABLE advisor_service (
+    advisor_id INT REFERENCES advisors(advisor_id) ON DELETE CASCADE,
+    service_id INT REFERENCES service_types(service_types) ON DELETE CASCADE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (advisor_id, service_id)
+);
+
+CREATE TABLE investor_service (
+    investor_id INT REFERENCES investors(investor_id) ON DELETE CASCADE,
+    service_id INT REFERENCES service_types(service_types) ON DELETE CASCADE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (investor_id, service_id)
+);
 
 
 -- Appointments table

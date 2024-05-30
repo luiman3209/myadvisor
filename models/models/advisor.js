@@ -17,7 +17,6 @@ module.exports = (sequelize) => {
         },
         qualifications: DataTypes.TEXT,
         expertise: DataTypes.TEXT,
-        services_offered: DataTypes.TEXT,
         contact_information: DataTypes.TEXT,
         start_shift_1: {
             type: DataTypes.DATE,
@@ -37,7 +36,13 @@ module.exports = (sequelize) => {
         },
         profile_views: {
             type: DataTypes.INTEGER,
+            allowNull: false,
             defaultValue: 0,
+        },
+        is_verified: {
+            type: DataTypes.STRING(1),
+            allowNull: false,
+            defaultValue: 'N',
         },
         created_at: {
             type: DataTypes.DATE,

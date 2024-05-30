@@ -1,6 +1,7 @@
 const express = require('express');
 const { User, Advisor, Review, Appointment } = require('../models/models');
 const passport = require('passport');
+const { ServiceType } = require('../models/models');
 
 const router = express.Router();
 
@@ -11,6 +12,31 @@ const isAdmin = (req, res, next) => {
     }
     next();
 };
+
+// Endpoint to insert a new service type
+router.post('/services/add', passport.authenticate('jwt', { session: false }), async (req, res) => {
+    const { service_type_name, service_type_code, is_active } = req.body;
+  
+    if (!service_type_name || !service_type_code || !is_active) {
+      return res.status(400).json({ message: 'All fields are required' });
+    }
+  
+    try {
+      const [serviceType, created] = await ServiceType.findOrCreate({
+        where: { service_type_code },
+        defaults: { service_type_name, is_active },
+      });
+  
+      if (!created) {
+        return res.status(409).json({ message: 'Service type already exists' });
+      }
+  
+      res.status(201).json(serviceType);
+    } catch (error) {
+      console.error('Error inserting service type:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
 
 /**
  * @swagger

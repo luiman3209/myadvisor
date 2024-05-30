@@ -19,7 +19,6 @@ describe('Search Routes', () => {
                     id: 1,
                     location: 'New York',
                     expertise: 'Retirement Planning',
-                    services_offered: 'Investment Advice',
                     Profile: { user_id: 1 },
                     Reviews: [{ rating: 5 }]
                 }
