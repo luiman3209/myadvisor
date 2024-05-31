@@ -31,6 +31,11 @@ module.exports = (sequelize) => {
             type: DataTypes.DATE,
             allowNull: false,
         },
+        is_reviewed: {
+            type: DataTypes.STRING(1),
+            allowNull: false,
+            defaultValue: 'N',
+        },
         status: {
             type: DataTypes.STRING,
             allowNull: false,

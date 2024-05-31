@@ -81,14 +81,19 @@ CREATE TABLE advisors (
     operating_city_code TEXT NOT NULL,
     operating_country_code TEXT NOT NULL,
     contact_information TEXT,
-    start_shift_1 TIMESTAMP NOT NULL,
-    end_shift_1 TIMESTAMP NOT NULL,
-    start_shift_2 TIMESTAMP,
-    end_shift_2 TIMESTAMP,
+    start_shift_1 TEXT NOT NULL,
+    check (start_shift_1 in ('0000', '0100', '0200', '0300', '0400', '0500', '0600', '0700', '0800', '0900', '1000', '1100', '1200', '1300', '1400', '1500', '1600', '1700', '1800', '1900', '2000', '2100', '2200', '2300')),
+    end_shift_1 TEXT NOT NULL,
+    check (end_shift_1 in ('0000', '0100', '0200', '0300', '0400', '0500', '0600', '0700', '0800', '0900', '1000', '1100', '1200', '1300', '1400', '1500', '1600', '1700', '1800', '1900', '2000', '2100', '2200', '2300')),
+    start_shift_2 TEXT,
+    check (start_shift_2 in ('0000', '0100', '0200', '0300', '0400', '0500', '0600', '0700', '0800', '0900', '1000', '1100', '1200', '1300', '1400', '1500', '1600', '1700', '1800', '1900', '2000', '2100', '2200', '2300')),
+    end_shift_2 TEXT,
+    check (end_shift_2 in ('0000', '0100', '0200', '0300', '0400', '0500', '0600', '0700', '0800', '0900', '1000', '1100', '1200', '1300', '1400', '1500', '1600', '1700', '1800', '1900', '2000', '2100', '2200', '2300')),
     profile_views INT not null default 0,
     is_verified VARCHAR(1) not null default 'N',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    img_url TEXT,
 );
 
 -- [['retirement_planning', 'investment_management', 'tax_planning', 'estate_planning', 'insurance_planning', 
@@ -127,6 +132,7 @@ CREATE TABLE appointments (
     advisor_id INT REFERENCES advisors(advisor_id) ON DELETE CASCADE,
     start_time TIMESTAMP NOT NULL,
     end_time TIMESTAMP NOT NULL,
+    is_reviewed VARCHAR(1) not null default 'N',
     status VARCHAR(50) CHECK (status IN ('scheduled', 'confirmed', 'completed', 'canceled')) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

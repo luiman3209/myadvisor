@@ -189,17 +189,20 @@ router.put('/', passport.authenticate('jwt', { session: false }), async (req, re
                 preferences,
                 visibility
             });
+            return res.status(200).json({ message: 'Profile created successfully', profile });
         } catch (e) {
             res.status(400).json({ message: 'Error saving profile info', error: e })
         }
-
-        return res.status(200).json({ message: 'Profile created successfully', profile });
+        
+    }
+    try {
+        // Update existing profile
+        await profile.update({ first_name, last_name, phone_number, address, preferences, visibility });
+        res.json({ message: 'Profile updated successfully', profile });
+    } catch (e) {
+        res.status(400).json({ message: 'Error updating profile info', error: e })
     }
 
-    // Update existing profile
-    await profile.update({ first_name, last_name, phone_number, address, preferences, visibility });
-
-    res.json({ message: 'Profile updated successfully', profile });
 });
 
 module.exports = router;

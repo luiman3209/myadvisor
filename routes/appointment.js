@@ -98,54 +98,6 @@ router.post('/book', passport.authenticate('jwt', { session: false }), async (re
     }
 });
 
-/**
- * @swagger
- * /appointment/user:
- *   get:
- *     summary: Get all appointments for a user
- *     tags:
- *       - Appointment
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: A list of appointments for the user
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 type: object
- *                 properties:
- *                   id:
- *                     type: integer
- *                     example: 1
- *                   user_id:
- *                     type: integer
- *                     example: 1
- *                   advisor_id:
- *                     type: integer
- *                     example: 1
- *                   start_time:
- *                     type: string
- *                     format: date-time
- *                     example: '2023-01-01T10:00:00Z'
- *                   end_time:
- *                     type: string
- *                     format: date-time
- *                     example: '2023-01-01T11:00:00Z'
- *                   status:
- *                     type: string
- *                     example: 'scheduled'
- */
-router.get('/user', passport.authenticate('jwt', { session: false }), async (req, res) => {
-    try {
-        const appointments = await Appointment.findAll({ where: { user_id: req.user.id } });
-        res.json(appointments);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
 
 /**
  * @swagger

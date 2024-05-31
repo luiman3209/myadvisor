@@ -339,6 +339,12 @@ router.get('/', passport.authenticate('jwt', { session: false }), async (req, re
  *                     is_verified:
  *                       type: string
  *                       example: "N"
+ *                     first_name:
+ *                       type: string
+ *                       example: "John"
+ *                     last_name:
+ *                       type: string
+ *                       example: "Doe"
  *                 profileReviews:
  *                   type: array
  *                   items:
@@ -393,8 +399,15 @@ router.get('/:advisor_id', async (req, res) => {
     try {
         const { advisor_id } = req.params;
 
-        // Find the advisor by ID
-        const advisor = await Advisor.findByPk(advisor_id);
+        // Find the advisor by ID, including the Profile
+        const advisor = await Advisor.findByPk(advisor_id, {
+            include: [
+                {
+                    model: Profile,
+                    attributes: ['first_name', 'last_name'],
+                },
+            ],
+        });
 
         if (!advisor) {
             return res.status(404).json({ message: 'Advisor not found' });
@@ -412,7 +425,11 @@ router.get('/:advisor_id', async (req, res) => {
         const serviceTypes = await ServiceType.findAll({ where: { service_id: serviceIds } });
 
         res.json({
-            advisor,
+            advisor: {
+                ...advisor.get(),
+                first_name: advisor.Profile.first_name,
+                last_name: advisor.Profile.last_name,
+            },
             profileReviews,
             serviceTypes,
         });
