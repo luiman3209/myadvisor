@@ -1,8 +1,11 @@
 {
   "development": {
-    "dialect": "sqlite",
-    "storage": ":memory:",
-    "logging": false
+    "use_env_variable": "DATABASE_URL_LOCAL",
+    "dialect": "postgres",
+    "dialectOptions": {},
+    "define": {
+      "schema": "myadvisor"
+    }
   },
   "test": {
     "dialect": "sqlite",
