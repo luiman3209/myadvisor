@@ -25,6 +25,7 @@ module.exports = (sequelize) => {
             defaultValue: DataTypes.NOW,
         },
     }, {
+        tableName: 'advisor_service',
         timestamps: false,
     });
 };

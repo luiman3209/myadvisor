@@ -63,11 +63,15 @@ Payment.belongsTo(Appointment, { foreignKey: 'appointment_id' });
 
 Advisor.belongsToMany(ServiceType, { through: AdvisorService, foreignKey: 'advisor_id' });
 ServiceType.belongsToMany(Advisor, { through: AdvisorService, foreignKey: 'service_id' });
+Advisor.hasMany(AdvisorService, { foreignKey: 'advisor_id' });
+AdvisorService.belongsTo(Advisor, { foreignKey: 'advisor_id' });
 
 Investor.belongsToMany(ServiceType, { through: InvestorService, foreignKey: 'investor_id' });
 ServiceType.belongsToMany(Investor, { through: InvestorService, foreignKey: 'service_id' });
+Investor.hasMany(InvestorService, { foreignKey: 'investor_id' });
+InvestorService.belongsTo(Investor, { foreignKey: 'investor_id' });
 
-if (env === 'development' || env === 'test') {
+if (env === 'test') {
     sequelize.sync({ force: true }).then(() => {
         console.log('Tables created');
     }).catch(error => {

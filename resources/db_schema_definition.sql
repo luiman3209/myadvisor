@@ -1,42 +1,42 @@
 
-CREATE SEQUENCE appointment_id_seq
+CREATE SEQUENCE myadvisor.appointment_id_seq
 START WITH 1
 INCREMENT BY 1
 NO MINVALUE
 NO MAXVALUE
 CACHE 1;
 
-CREATE SEQUENCE user_id_seq
+CREATE SEQUENCE myadvisor.user_id_seq
 START WITH 1
 INCREMENT BY 1
 NO MINVALUE
 NO MAXVALUE
 CACHE 1; 
 
-CREATE SEQUENCE review_id_seq
+CREATE SEQUENCE myadvisor.review_id_seq
 START WITH 1
 INCREMENT BY 1
 NO MINVALUE
 NO MAXVALUE
 CACHE 1; 
 
-CREATE SEQUENCE message_id_seq
+CREATE SEQUENCE myadvisor.message_id_seq
 START WITH 1
 INCREMENT BY 1
 NO MINVALUE
 NO MAXVALUE
 CACHE 1; 
 
-CREATE SEQUENCE payment_id_seq
+CREATE SEQUENCE myadvisor.payment_id_seq
 START WITH 1
 INCREMENT BY 1
 NO MINVALUE
 NO MAXVALUE
-CACHE 1
+CACHE 1;
 
 -- user_configs table
-CREATE TABLE user_configs (
-    user_id INT PRIMARY KEY DEFAULT nextval('user_id_seq'),
+CREATE TABLE myadvisor.user_configs (
+    user_id INT PRIMARY KEY DEFAULT nextval('myadvisor.user_id_seq'),
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     role VARCHAR(50) CHECK (role IN ('investor', 'advisor', 'admin')) NOT NULL,
@@ -45,9 +45,9 @@ CREATE TABLE user_configs (
 );
 
 -- Profiles table
-CREATE TABLE profiles (
+CREATE TABLE myadvisor.profiles (
     profile_id SERIAL PRIMARY KEY,
-    user_id INT REFERENCES user_configs(user_id) ON DELETE CASCADE,
+    user_id INT REFERENCES myadvisor.user_configs(user_id) ON DELETE CASCADE,
     first_name VARCHAR(100),
     last_name VARCHAR(100),
     phone_number VARCHAR(20),
@@ -60,9 +60,9 @@ CREATE TABLE profiles (
 );
 
 -- investors table
-CREATE TABLE investors (
+CREATE TABLE myadvisor.investors (
     investor_id SERIAL PRIMARY KEY,
-    user_id INT REFERENCES user_configs(user_id) ON DELETE CASCADE,
+    user_id INT REFERENCES myadvisor.user_configs(user_id) ON DELETE CASCADE,
     net_worth varchar(100) check (net_worth in ('<50000', '50000-99999', '100000-199999', '200000-499999', '500000-999999', '1000000-4999999', '5000000-9999999',
      '10000000-49999999', '50000000-99999999', '100000000-499999999', '500000000-999999999', '>1000000000')),
     income_range VARCHAR(50) CHECK (income_range IN ('<25000', '25000-49999', '50000-74999', '75000-99999', '100000-149999', '150000-199999', '>200000')),
@@ -72,12 +72,12 @@ CREATE TABLE investors (
 );
 
 -- advisors table
-CREATE TABLE advisors (
+CREATE TABLE myadvisor.advisors (
     advisor_id SERIAL PRIMARY KEY,
-    user_id INT REFERENCES user_configs(user_id) ON DELETE CASCADE,
+    user_id INT REFERENCES myadvisor.user_configs(user_id) ON DELETE CASCADE,
     qualifications TEXT,
     expertise TEXT,
-    office_address  NOT NULL TEXT,
+    office_address TEXT NOT NULL,
     operating_city_code TEXT NOT NULL,
     operating_country_code TEXT NOT NULL,
     contact_information TEXT,
@@ -93,14 +93,14 @@ CREATE TABLE advisors (
     is_verified VARCHAR(1) not null default 'N',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    img_url TEXT,
+    img_url TEXT
 );
 
 -- [['retirement_planning', 'investment_management', 'tax_planning', 'estate_planning', 'insurance_planning', 
 -- 'education_planning', 'debt_management', 'small_business_planning', 'divorce_planning', 'elder_care_planning', 
 -- 'charitable_giving_and_philanthropy', 'behavioral_finance', 'wealth_management', 'risk_management', 'financial_education_and_coaching']]
             
-CREATE TABLE service_types (
+CREATE TABLE myadvisor.service_types (
     service_id SERIAL PRIMARY KEY,
     service_type_name TEXT unique not null,
     service_type_code TEXT unique not null,
@@ -110,30 +110,30 @@ CREATE TABLE service_types (
 );
 
 
-CREATE TABLE advisor_service (
-    advisor_id INT REFERENCES advisors(advisor_id) ON DELETE CASCADE,
-    service_id INT REFERENCES service_types(service_types) ON DELETE CASCADE,
+CREATE TABLE myadvisor.advisor_service (
+    advisor_id INT REFERENCES myadvisor.advisors(advisor_id) ON DELETE CASCADE,
+    service_id INT REFERENCES myadvisor.service_types(service_id) ON DELETE CASCADE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (advisor_id, service_id)
 );
 
-CREATE TABLE investor_service (
-    investor_id INT REFERENCES investors(investor_id) ON DELETE CASCADE,
-    service_id INT REFERENCES service_types(service_types) ON DELETE CASCADE,
+CREATE TABLE myadvisor.investor_service (
+    investor_id INT REFERENCES myadvisor.investors(investor_id) ON DELETE CASCADE,
+    service_id INT REFERENCES myadvisor.service_types(service_id) ON DELETE CASCADE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (investor_id, service_id)
 );
 
 
 -- Appointments table
-CREATE TABLE appointments (
-    appointment_id INT PRIMARY KEY DEFAULT nextval('appointment_id_seq'),
-    user_id INT REFERENCES user_configs(user_id) ON DELETE CASCADE,
-    advisor_id INT REFERENCES advisors(advisor_id) ON DELETE CASCADE,
+CREATE TABLE myadvisor.appointments (
+    appointment_id INT PRIMARY KEY DEFAULT nextval('myadvisor.appointment_id_seq'),
+    user_id INT REFERENCES myadvisor.user_configs(user_id) ON DELETE CASCADE,
+    advisor_id INT REFERENCES myadvisor.advisors(advisor_id) ON DELETE CASCADE,
     start_time TIMESTAMP NOT NULL,
     end_time TIMESTAMP NOT NULL,
-    is_reviewed VARCHAR(1) not null default 'N',
-    status VARCHAR(50) CHECK (status IN ('scheduled', 'confirmed', 'completed', 'canceled')) NOT NULL,
+    is_reviewed VARCHAR(1) NOT NULL DEFAULT 'N',
+    status VARCHAR(50) NOT NULL CHECK (status IN ('scheduled', 'confirmed', 'completed', 'canceled')),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -141,10 +141,10 @@ CREATE TABLE appointments (
 
 
 -- Reviews table
-CREATE TABLE reviews (
-    review_id INT PRIMARY KEY DEFAULT nextval('review_id_seq'),
-    user_id INT REFERENCES user_configs(user_id) ON DELETE CASCADE,
-    advisor_id INT REFERENCES advisors(advisor_id) ON DELETE CASCADE,
+CREATE TABLE myadvisor.reviews (
+    review_id INT PRIMARY KEY DEFAULT nextval('myadvisor.review_id_seq'),
+    user_id INT REFERENCES myadvisor.user_configs(user_id) ON DELETE CASCADE,
+    advisor_id INT REFERENCES myadvisor.advisors(advisor_id) ON DELETE CASCADE,
     rating INT CHECK (rating BETWEEN 1 AND 5),
     review TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -152,10 +152,10 @@ CREATE TABLE reviews (
 );
 
 -- Messages table
-CREATE TABLE messages (
-    message_id INT PRIMARY KEY DEFAULT nextval('message_id_seq'),
-    sender_id INT REFERENCES user_configs(user_id) ON DELETE CASCADE,
-    receiver_id INT REFERENCES user_configs(user_id) ON DELETE CASCADE,
+CREATE TABLE myadvisor.messages (
+    message_id INT PRIMARY KEY DEFAULT nextval('myadvisor.message_id_seq'),
+    sender_id INT REFERENCES myadvisor.user_configs(user_id) ON DELETE CASCADE,
+    receiver_id INT REFERENCES myadvisor.user_configs(user_id) ON DELETE CASCADE,
     content TEXT NOT NULL,
     sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -164,10 +164,10 @@ CREATE TABLE messages (
 
 
 -- Payments table (optional)
-CREATE TABLE payments (
-    payment_id INT PRIMARY KEY DEFAULT nextval('payment_id_seq'),
-    user_id INT REFERENCES user_configs(user_id) ON DELETE CASCADE,
-    appointment_id INT REFERENCES appointments(appointment_id) ON DELETE CASCADE,
+CREATE TABLE myadvisor.payments (
+    payment_id INT PRIMARY KEY DEFAULT nextval('myadvisor.payment_id_seq'),
+    user_id INT REFERENCES myadvisor.user_configs(user_id) ON DELETE CASCADE,
+    appointment_id INT REFERENCES myadvisor.appointments(appointment_id) ON DELETE CASCADE,
     amount DECIMAL(10, 2) NOT NULL,
     payment_method VARCHAR(50),
     payment_status VARCHAR(50) CHECK (payment_status IN ('pending', 'completed', 'failed')) NOT NULL,

@@ -3,7 +3,7 @@ const passport = require('passport');
 
 const { Appointment, Advisor, User } = require('../models/models');
 const { sendEmail } = require('../utils/notification');
-const { calculateFreeWindows } = require('../utils/schedule');
+const { Op } = require('sequelize');
 
 const router = express.Router();
 const minFreeWindowDuration = 30; // Minimum free window duration in minutes
@@ -86,8 +86,8 @@ router.post('/book', passport.authenticate('jwt', { session: false }), async (re
         const advisor = await Advisor.findByPk(advisor_id, { include: User });
         const user = await User.findByPk(user_id);
 
-        await sendEmail(advisor.User.email, 'New Appointment Scheduled', `You have a new appointment scheduled with ${user.email} at ${start_time}.`);
-        await sendEmail(user.email, 'Appointment Confirmation', `Your appointment with ${advisor.User.email} is scheduled for ${start_time}.`);
+        //await sendEmail(advisor.User.email, 'New Appointment Scheduled', `You have a new appointment scheduled with ${user.email} at ${start_time}.`);
+        //await sendEmail(user.email, 'Appointment Confirmation', `Your appointment with ${advisor.User.email} is scheduled for ${start_time}.`);
 
         res.json({
             message: 'Appointment booked successfully',
@@ -234,7 +234,7 @@ router.put('/:appointmentId/status', passport.authenticate('jwt', { session: fal
 /**
  * @swagger
  * /appointment/free-windows/{advisorId}:
- *   get:
+ *   post:
  *     summary: Get free windows for a given advisor
  *     tags:
  *       - Appointment
@@ -245,6 +245,23 @@ router.put('/:appointmentId/status', passport.authenticate('jwt', { session: fal
  *         schema:
  *           type: integer
  *         description: The advisor ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               startDate:
+ *                 type: string
+ *                 format: date
+ *                 example: '2024-06-01'
+ *                 description: The start date to fetch free windows
+ *               endDate:
+ *                 type: string
+ *                 format: date
+ *                 example: '2024-06-30'
+ *                 description: The end date to fetch free windows
  *     responses:
  *       200:
  *         description: Free time windows for the advisor
@@ -252,70 +269,135 @@ router.put('/:appointmentId/status', passport.authenticate('jwt', { session: fal
  *           application/json:
  *             schema:
  *               type: object
- *               properties:
- *                 freeWindowsShift1:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       start:
- *                         type: string
- *                         format: date-time
- *                         example: '2023-01-01T10:00:00Z'
- *                       end:
- *                         type: string
- *                         format: date-time
- *                         example: '2023-01-01T11:00:00Z'
- *                 freeWindowsShift2:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       start:
- *                         type: string
- *                         format: date-time
- *                         example: '2023-01-01T15:00:00Z'
- *                       end:
- *                         type: string
- *                         format: date-time
- *                         example: '2023-01-01T16:00:00Z'
+ *               additionalProperties:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: time
+ *                   example: '09:00'
+ *       404:
+ *         description: Advisor not found
+ *       500:
+ *         description: Internal server error
  */
-router.get('/free-windows/:advisorId', passport.authenticate('jwt', { session: false }), async (req, res) => {
+router.post('/free-windows/:advisorId', async (req, res) => {
     try {
         const advisorId = req.params.advisorId;
-
+        const { startDate, endDate } = req.body;
+        
         // Fetch working hours for the advisor from the database
         const advisor = await Advisor.findByPk(advisorId);
 
-        // Example working hours and appointment duration (in minutes)
-        let workingHours = {
-            start: advisor.start_shift_1,
-            end: advisor.end_shift_1,
-        };
-
-        // Fetch existing appointments for the advisor
-        const appointments = await Appointment.findAll({
-            where: { advisor_id: advisorId },
-            order: [['start_time', 'ASC']],
-        });
-
-        // Calculate free time windows
-        let freeWindowsShift1 = calculateFreeWindows(appointments, workingHours, minFreeWindowDuration);
-
-        if (advisor.start_shift_2 && advisor.end_shift_2) {
-            workingHours = {
-                start: advisor.start_shift_2,
-                end: advisor.end_shift_2,
-            };
-            let freeWindowsShift2 = calculateFreeWindows(appointments, workingHours, minFreeWindowDuration);
-            res.json({ freeWindowsShift1, freeWindowsShift2 });
-        } else {
-            res.json({ freeWindowsShift1 });
+        if (!advisor) {
+            return res.status(404).json({ error: 'Advisor not found' });
         }
 
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        // add 1 day to the end date to include the end date in the range
+        end.setDate(end.getDate() + 1);
+        const result = {};
+
+        // Iterate through each day from startDate to endDate
+        for (let currentDate = new Date(start); currentDate <= end; currentDate.setDate(currentDate.getDate() + 1)) {
+            const dateStr = currentDate.toISOString().split('T')[0];
+
+            // Fetch existing appointments for the advisor for the specific date
+            const appointments = await Appointment.findAll({
+                where: {
+                    advisor_id: advisorId,
+                    start_time: {
+                        [Op.between]: [new Date(currentDate.setHours(0, 0, 0, 0)), new Date(currentDate.setHours(23, 59, 59, 999))]
+                    }
+                },
+                order: [['start_time', 'ASC']],
+            });
+
+            // Convert shift times to Date objects for the specific date
+            let workingHoursShift1 = {
+                start: convertTimeToDate(advisor.start_shift_1, currentDate),
+                end: convertTimeToDate(advisor.end_shift_1, currentDate),
+            };
+
+            // Calculate free time windows for shift 1
+            let freeWindowsShift1 = calculateFreeWindows(appointments, workingHoursShift1);
+
+            let freeWindowsShift2 = [];
+            if (advisor.start_shift_2 && advisor.end_shift_2) {
+                let workingHoursShift2 = {
+                    start: convertTimeToDate(advisor.start_shift_2, currentDate),
+                    end: convertTimeToDate(advisor.end_shift_2, currentDate),
+                };
+                freeWindowsShift2 = calculateFreeWindows(appointments, workingHoursShift2);
+           
+            }
+
+            // Format and accumulate results
+            formatFreeWindows(result, freeWindowsShift1);
+            formatFreeWindows(result, freeWindowsShift2);
+        }
+
+        res.json(result);
+
     } catch (error) {
+        console.error(error);
         res.status(500).json({ error: error.message });
     }
 });
+
+function convertTimeToDate(time, date) {
+    const dateTime = new Date(date);
+    const hours = parseInt(time.substring(0, 2));
+    const minutes = parseInt(time.substring(2, 4));
+    dateTime.setHours(hours, minutes, 0, 0);
+    return dateTime;
+}
+
+function calculateFreeWindows(appointments, workingHours) {
+    const freeWindows = [];
+    let currentTime = new Date(workingHours.start);
+
+    appointments.forEach(appointment => {
+        const appointmentStart = new Date(appointment.start_time);
+        while (currentTime < appointmentStart) {
+            const endWindow = new Date(currentTime);
+            endWindow.setMinutes(endWindow.getMinutes() + 30);
+
+            if (endWindow <= appointmentStart) {
+                freeWindows.push({ start: currentTime.toISOString(), end: endWindow.toISOString() });
+                currentTime = endWindow;
+            } else {
+                currentTime = appointmentStart;
+            }
+        }
+        currentTime = new Date(appointment.end_time);
+    });
+
+    while (currentTime < workingHours.end) {
+        const endWindow = new Date(currentTime);
+        endWindow.setMinutes(endWindow.getMinutes() + 30);
+
+        if (endWindow <= workingHours.end) {
+            freeWindows.push({ start: currentTime.toISOString(), end: endWindow.toISOString() });
+            currentTime = endWindow;
+        } else {
+            currentTime = workingHours.end;
+        }
+    }
+
+    return freeWindows;
+}
+
+function formatFreeWindows(result, freeWindows) {
+    freeWindows.forEach(window => {
+        const date = window.start.split('T')[0];
+        const time = window.start.split('T')[1].substring(0, 5);
+        if (!result[date]) {
+            result[date] = [];
+        }
+        result[date].push(time);
+    });
+}
+
 
 module.exports = router;

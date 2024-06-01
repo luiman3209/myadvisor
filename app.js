@@ -12,6 +12,7 @@ const dashboardRoutes = require('./routes/dashboard');
 const adminRoutes = require('./routes/admin');
 const messageRoutes = require('./routes/message');
 const serviceRoutes = require('./routes/service');
+const helmet = require('helmet');
 
 const setupSwagger = require('./swagger');
 
@@ -26,6 +27,7 @@ if (process.env.NODE_ENV === 'development') {
   }));
 }
 
+app.use(helmet());
 app.use(bodyParser.json());
 app.use(passport.initialize());
 
@@ -133,12 +135,12 @@ const insertExampleServiceTypes = async () => {
 };
 
 
-if (process.env.NODE_ENV !== 'test'){
+if (process.env.NODE_ENV !== 'test') {
   console.log('ENV: ', process.env.NODE_ENV);
   setupSwagger(app);
-    app.listen(PORT, async () => {
-      console.log(`Server is running on port ${PORT}`);
-    });
+  app.listen(PORT, async () => {
+    console.log(`Server is running on port ${PORT}`);
+  });
 
 }
 

@@ -418,20 +418,23 @@ router.get('/:advisor_id', async (req, res) => {
             where: { advisor_id },
             include: [{ model: User, attributes: ['email'] }],
         });
-
-        // Fetch service types for the advisor
+        console.log('profileReviews', profileReviews);
+        //Fetch service types for the advisor
+        //Fetch service types for the advisor
         const advisorServices = await AdvisorService.findAll({ where: { advisor_id } });
         const serviceIds = advisorServices.map(as => as.service_id);
         const serviceTypes = await ServiceType.findAll({ where: { service_id: serviceIds } });
 
+
         res.json({
             advisor: {
                 ...advisor.get(),
-                first_name: advisor.Profile.first_name,
-                last_name: advisor.Profile.last_name,
+                first_name: advisor.profile.first_name,
+                last_name: advisor.profile.last_name,
             },
             profileReviews,
             serviceTypes,
+            offices: [advisor.office_address],
         });
     } catch (error) {
         res.status(500).json({ error: error.message });
