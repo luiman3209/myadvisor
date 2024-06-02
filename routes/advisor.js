@@ -249,7 +249,6 @@ router.put('/', passport.authenticate('jwt', { session: false }), async (req, re
  */
 router.get('/', passport.authenticate('jwt', { session: false }), async (req, res) => {
     try {
-        console.log('Advisor detail requested');
         // Find the advisor using the user_id
         const advisor = await Advisor.findOne({ where: { user_id: req.user.id } });
 
@@ -418,7 +417,7 @@ router.get('/:advisor_id', async (req, res) => {
             where: { advisor_id },
             include: [{ model: User, attributes: ['email'] }],
         });
-        console.log('profileReviews', profileReviews);
+
         //Fetch service types for the advisor
         //Fetch service types for the advisor
         const advisorServices = await AdvisorService.findAll({ where: { advisor_id } });

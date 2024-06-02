@@ -5,6 +5,7 @@ const { Appointment, Advisor, User } = require('../models/models');
 const { sendEmail } = require('../utils/notification');
 const { Op } = require('sequelize');
 
+const dateFormat = 'YYYY-MM-DD HH:mm:ss';
 const router = express.Router();
 const minFreeWindowDuration = 30; // Minimum free window duration in minutes
 
@@ -89,12 +90,18 @@ router.post('/book', passport.authenticate('jwt', { session: false }), async (re
         //await sendEmail(advisor.User.email, 'New Appointment Scheduled', `You have a new appointment scheduled with ${user.email} at ${start_time}.`);
         //await sendEmail(user.email, 'Appointment Confirmation', `Your appointment with ${advisor.User.email} is scheduled for ${start_time}.`);
 
+        const formattedAppointment = {
+            ...appointment.toJSON(),
+            start_time: appointment.start_time.toISOString(),
+            end_time: appointment.end_time.toISOString(),
+        };
+
         res.json({
             message: 'Appointment booked successfully',
-            appointment,
+            appointment: formattedAppointment,
         });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: error });
     }
 });
 
@@ -280,124 +287,93 @@ router.put('/:appointmentId/status', passport.authenticate('jwt', { session: fal
  *       500:
  *         description: Internal server error
  */
+
+// Helper function to generate time slots
+function generateTimeSlots(start, end, interval = 30) {
+    const slots = [];
+    let current = new Date(start);
+
+    while (current < end) {
+        slots.push(current.toTimeString().substring(0, 5));
+        current = new Date(current.getTime() + interval * 60000); // Add interval minutes
+    }
+
+    return slots;
+}
+
+// Helper function to convert "HHmm" string to Date object
+function convertToTime(date, timeString) {
+    const hours = parseInt(timeString.substring(0, 2), 10);
+    const minutes = parseInt(timeString.substring(2, 4), 10);
+    return new Date(date.setHours(hours, minutes, 0, 0));
+}
+
 router.post('/free-windows/:advisorId', async (req, res) => {
     try {
         const advisorId = req.params.advisorId;
         const { startDate, endDate } = req.body;
-        
-        // Fetch working hours for the advisor from the database
+
+        // Get the advisor's working hours
         const advisor = await Advisor.findByPk(advisorId);
-
         if (!advisor) {
-            return res.status(404).json({ error: 'Advisor not found' });
+            return res.status(404).send('Advisor not found');
         }
 
-        const start = new Date(startDate);
-        const end = new Date(endDate);
-        // add 1 day to the end date to include the end date in the range
-        end.setDate(end.getDate() + 1);
-        const result = {};
+        const workingHoursShift1 = {
+            start: advisor.start_shift_1,
+            end: advisor.end_shift_1,
+        };
 
-        // Iterate through each day from startDate to endDate
-        for (let currentDate = new Date(start); currentDate <= end; currentDate.setDate(currentDate.getDate() + 1)) {
-            const dateStr = currentDate.toISOString().split('T')[0];
-
-            // Fetch existing appointments for the advisor for the specific date
-            const appointments = await Appointment.findAll({
-                where: {
-                    advisor_id: advisorId,
-                    start_time: {
-                        [Op.between]: [new Date(currentDate.setHours(0, 0, 0, 0)), new Date(currentDate.setHours(23, 59, 59, 999))]
-                    }
+        // Get all appointments for the advisor between the start and end dates
+        const appointments = await Appointment.findAll({
+            where: {
+                advisor_id: advisorId,
+                start_time: {
+                    [Op.between]: [new Date(startDate), new Date(endDate)],
                 },
-                order: [['start_time', 'ASC']],
-            });
+            },
+            order: [['start_time', 'ASC']],
+        });
 
-            // Convert shift times to Date objects for the specific date
-            let workingHoursShift1 = {
-                start: convertTimeToDate(advisor.start_shift_1, currentDate),
-                end: convertTimeToDate(advisor.end_shift_1, currentDate),
-            };
+        // Generate time slots for each day between startDate and endDate
+        let currentDate = new Date(startDate);
+        const end = new Date(endDate);
+        const freeWindows = {};
 
-            // Calculate free time windows for shift 1
-            let freeWindowsShift1 = calculateFreeWindows(appointments, workingHoursShift1);
+        while (currentDate <= end) {
+            const dateStr = currentDate.toISOString().split('T')[0];
+            const dayStart = convertToTime(new Date(currentDate), workingHoursShift1.start);
+            const dayEnd = convertToTime(new Date(currentDate), workingHoursShift1.end);
+            const allSlots = generateTimeSlots(dayStart, dayEnd);
+            // Remove booked slots
+            const bookedAppointments = appointments
+                .filter(appt => {
+                    const apptDate = appt.start_time.toISOString().split('T')[0];
+                    return apptDate === dateStr;
+                });
 
-            let freeWindowsShift2 = [];
-            if (advisor.start_shift_2 && advisor.end_shift_2) {
-                let workingHoursShift2 = {
-                    start: convertTimeToDate(advisor.start_shift_2, currentDate),
-                    end: convertTimeToDate(advisor.end_shift_2, currentDate),
-                };
-                freeWindowsShift2 = calculateFreeWindows(appointments, workingHoursShift2);
-           
-            }
-
-            // Format and accumulate results
-            formatFreeWindows(result, freeWindowsShift1);
-            formatFreeWindows(result, freeWindowsShift2);
+            const bookedSlots = bookedAppointments
+                .map(appt => {
+                    const start = new Date(appt.start_time);
+                    const end = new Date(appt.end_time);
+                    return generateTimeSlots(start, end);
+                })
+                .flat();
+            
+       
+            const availableSlots = allSlots.filter(slot => !bookedSlots.includes(slot));
+            freeWindows[dateStr] = availableSlots;
+          
+            // Move to the next day
+            currentDate.setDate(currentDate.getDate() + 1);
         }
 
-        res.json(result);
-
+        res.json(freeWindows);
     } catch (error) {
         console.error(error);
-        res.status(500).json({ error: error.message });
+        res.status(500).send('Internal Server Error');
     }
 });
-
-function convertTimeToDate(time, date) {
-    const dateTime = new Date(date);
-    const hours = parseInt(time.substring(0, 2));
-    const minutes = parseInt(time.substring(2, 4));
-    dateTime.setHours(hours, minutes, 0, 0);
-    return dateTime;
-}
-
-function calculateFreeWindows(appointments, workingHours) {
-    const freeWindows = [];
-    let currentTime = new Date(workingHours.start);
-
-    appointments.forEach(appointment => {
-        const appointmentStart = new Date(appointment.start_time);
-        while (currentTime < appointmentStart) {
-            const endWindow = new Date(currentTime);
-            endWindow.setMinutes(endWindow.getMinutes() + 30);
-
-            if (endWindow <= appointmentStart) {
-                freeWindows.push({ start: currentTime.toISOString(), end: endWindow.toISOString() });
-                currentTime = endWindow;
-            } else {
-                currentTime = appointmentStart;
-            }
-        }
-        currentTime = new Date(appointment.end_time);
-    });
-
-    while (currentTime < workingHours.end) {
-        const endWindow = new Date(currentTime);
-        endWindow.setMinutes(endWindow.getMinutes() + 30);
-
-        if (endWindow <= workingHours.end) {
-            freeWindows.push({ start: currentTime.toISOString(), end: endWindow.toISOString() });
-            currentTime = endWindow;
-        } else {
-            currentTime = workingHours.end;
-        }
-    }
-
-    return freeWindows;
-}
-
-function formatFreeWindows(result, freeWindows) {
-    freeWindows.forEach(window => {
-        const date = window.start.split('T')[0];
-        const time = window.start.split('T')[1].substring(0, 5);
-        if (!result[date]) {
-            result[date] = [];
-        }
-        result[date].push(time);
-    });
-}
 
 
 module.exports = router;

@@ -2,6 +2,7 @@
   "development": {
     "use_env_variable": "DATABASE_URL_LOCAL",
     "dialect": "postgres",
+    "timezone": "UTC",
     "dialectOptions": {},
     "define": {
       "schema": "myadvisor"
