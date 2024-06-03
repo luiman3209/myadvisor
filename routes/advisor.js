@@ -414,10 +414,16 @@ router.get('/:advisor_id', async (req, res) => {
             return res.status(404).json({ message: 'Advisor not found' });
         }
 
+        // update profile views
+        advisor.profile_views += 1;
+        await advisor.save();
+
         // Fetch reviews for the advisor
         const profileReviews = await Review.findAll({
             where: { advisor_id },
             include: [{ model: User, attributes: ['email'] }],
+            order: [['created_at', 'DESC']],
+            limit: 10,
         });
 
         //Fetch service types for the advisor
@@ -444,20 +450,13 @@ router.get('/:advisor_id', async (req, res) => {
 
 /**
  * @swagger
- * /advisor/{advisorId}/review:
+ * /advisor/review:
  *   post:
  *     summary: Leave a review for an advisor
  *     tags:
  *       - Advisor
  *     security:
  *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: advisorId
- *         required: true
- *         schema:
- *           type: integer
- *         description: The advisor ID
  *     requestBody:
  *       required: true
  *       content:
@@ -465,6 +464,9 @@ router.get('/:advisor_id', async (req, res) => {
  *           schema:
  *             type: object
  *             properties:
+ *               appointmentId:
+ *                  type: integer
+ *                  example: 1
  *               rating:
  *                 type: integer
  *                 example: 5
@@ -501,12 +503,10 @@ router.get('/:advisor_id', async (req, res) => {
  *                       type: string
  *                       example: "Great advice!"
  */
-router.post('/:advisorId/review', passport.authenticate('jwt', { session: false }), async (req, res) => {
+router.post('/review', passport.authenticate('jwt', { session: false }), async (req, res) => {
     try {
         const { rating, review, appointmentId } = req.body;
         const userId = req.user.id;
-
-        
 
         if(!appointmentId || !rating || !review) {
             return res.status(400).json({ message: 'Rating and review are required' });
@@ -527,13 +527,18 @@ router.post('/:advisorId/review', passport.authenticate('jwt', { session: false 
             return res.status(400).json({ message: 'Invalid appointment ID' });
         }
 
-        if(appointment.reviewed) {
+        if(appointment.is_reviewed) {
             return res.status(400).json({ message: 'Appointment already reviewed' });
         }
+
+        // Set appointment reviewed
+        appointment.is_reviewed = true;
+        await appointment.save();
 
         const newReview = await Review.create({
             user_id: userId,
             advisor_id: appointment.advisor_id,
+            appointment_id: appointment.appointment_id,
             rating,
             review,
         });
@@ -544,55 +549,6 @@ router.post('/:advisorId/review', passport.authenticate('jwt', { session: false 
     }
 });
 
-/**
- * @swagger
- * /advisor/{advisorId}/contact:
- *   get:
- *     summary: Get advisor contact information
- *     tags:
- *       - Advisor
- *     parameters:
- *       - in: path
- *         name: advisorId
- *         required: true
- *         schema:
- *           type: integer
- *         description: The advisor ID
- *     responses:
- *       200:
- *         description: Advisor contact information
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 email:
- *                   type: string
- *                   example: "advisor@example.com"
- *                 contactInformation:
- *                   type: string
- *                   example: "Contact details here"
- *       404:
- *         description: Advisor not found
- */
 
-router.get('/:advisorId/contact', passport.authenticate('jwt', { session: false }), async (req, res) => {
-    try {
-        const advisor = await Advisor.findByPk(req.params.advisorId, {
-            include: [{ model: User, attributes: ['email'] }],
-        });
-
-        if (!advisor) {
-            return res.status(404).json({ message: 'Advisor not found' });
-        }
-
-        res.json({
-            email: advisor.User.email,
-            contactInformation: advisor.contact_information,
-        });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
 
 module.exports = router;

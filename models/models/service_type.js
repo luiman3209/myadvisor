@@ -18,9 +18,9 @@ module.exports = (sequelize) => {
             allowNull: false,
         },
         is_active: {
-            type: DataTypes.STRING(1),
+            type: DataTypes.BOOLEAN,
             allowNull: false,
-            defaultValue: 'Y',
+            defaultValue: true,
         },
         created_at: {
             type: DataTypes.DATE,

@@ -76,6 +76,18 @@ router.post('/book', passport.authenticate('jwt', { session: false }), async (re
         const { advisor_id, start_time, end_time } = req.body;
         const user_id = req.user.id;
 
+        // Check if the advisor is available
+        const existingAppointment = await Appointment.findAll({
+            where: {
+                advisor_id,
+                start_time,
+            },
+        });
+
+        if(existingAppointment.length > 0) {
+            return res.status(400).json({ message: 'Advisor is not available at this time' });
+        }
+
         const appointment = await Appointment.create({
             user_id,
             advisor_id,
@@ -115,36 +127,61 @@ router.post('/book', passport.authenticate('jwt', { session: false }), async (re
  *       - Appointment
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           example: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           example: 10
+ *         description: Number of items per page
  *     responses:
  *       200:
  *         description: A list of appointments for the advisor
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 type: object
- *                 properties:
- *                   id:
- *                     type: integer
- *                     example: 1
- *                   user_id:
- *                     type: integer
- *                     example: 1
- *                   advisor_id:
- *                     type: integer
- *                     example: 1
- *                   start_time:
- *                     type: string
- *                     format: date-time
- *                     example: '2023-01-01T10:00:00Z'
- *                   end_time:
- *                     type: string
- *                     format: date-time
- *                     example: '2023-01-01T11:00:00Z'
- *                   status:
- *                     type: string
- *                     example: 'scheduled'
+ *               type: object
+ *               properties:
+ *                 totalItems:
+ *                   type: integer
+ *                   example: 50
+ *                 totalPages:
+ *                   type: integer
+ *                   example: 5
+ *                 currentPage:
+ *                   type: integer
+ *                   example: 1
+ *                 appointments:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                         example: 1
+ *                       user_id:
+ *                         type: integer
+ *                         example: 1
+ *                       advisor_id:
+ *                         type: integer
+ *                         example: 1
+ *                       start_time:
+ *                         type: string
+ *                         format: date-time
+ *                         example: '2023-01-01T10:00:00Z'
+ *                       end_time:
+ *                         type: string
+ *                         format: date-time
+ *                         example: '2023-01-01T11:00:00Z'
+ *                       status:
+ *                         type: string
+ *                         example: 'scheduled'
  */
 router.get('/advisor', passport.authenticate('jwt', { session: false }), async (req, res) => {
     try {
@@ -153,8 +190,24 @@ router.get('/advisor', passport.authenticate('jwt', { session: false }), async (
             return res.status(404).json({ message: 'Advisor profile not found' });
         }
 
-        const appointments = await Appointment.findAll({ where: { advisor_id: advisor.advisor_id } });
-        res.json(appointments);
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const offset = (page - 1) * limit;
+
+        const { count, rows } = await Appointment.findAndCountAll({
+            where: { advisor_id: advisor.advisor_id },
+            limit,
+            offset
+        });
+
+        const totalPages = Math.ceil(count / limit);
+
+        res.json({
+            totalItems: count,
+            totalPages: totalPages,
+            currentPage: page,
+            appointments: rows
+        });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -229,6 +282,10 @@ router.put('/:appointmentId/status', passport.authenticate('jwt', { session: fal
         const appointment = await Appointment.findByPk(appointmentId);
         if (!appointment) {
             return res.status(404).json({ message: 'Appointment not found' });
+        }
+
+        if(appointment.advisor_id !== req.user.id) {
+            return res.status(403).json({ message: 'You are not authorized to update this appointment' });
         }
 
         await appointment.update({ status });
@@ -313,6 +370,14 @@ router.post('/free-windows/:advisorId', async (req, res) => {
     try {
         const advisorId = req.params.advisorId;
         const { startDate, endDate } = req.body;
+
+        // Return error if time range is longer than 5 days
+        const diffTime = Math.abs(new Date(endDate) - new Date(startDate));
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        if (diffDays > 10) {
+            return res.status(400).send('Time range must be less than 10 days');
+        }
+        
 
         // Get the advisor's working hours
         const advisor = await Advisor.findByPk(advisorId);

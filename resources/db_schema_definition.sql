@@ -104,7 +104,7 @@ CREATE TABLE myadvisor.service_types (
     service_id SERIAL PRIMARY KEY,
     service_type_name TEXT unique not null,
     service_type_code TEXT unique not null,
-    is_active VARCHAR(1) not null default 'Y',
+    is_active BOOLEAN NOT NULL DEFAULT true,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -132,7 +132,7 @@ CREATE TABLE myadvisor.appointments (
     advisor_id INT REFERENCES myadvisor.advisors(advisor_id) ON DELETE CASCADE,
     start_time TIMESTAMP NOT NULL,
     end_time TIMESTAMP NOT NULL,
-    is_reviewed VARCHAR(1) NOT NULL DEFAULT 'N',
+    is_reviewed BOOLEAN NOT NULL DEFAULT false,
     status VARCHAR(50) NOT NULL CHECK (status IN ('scheduled', 'confirmed', 'completed', 'canceled')),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -149,7 +149,8 @@ CREATE TABLE reviews (
     rating INT CHECK (rating BETWEEN 1 AND 5),
     review TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT unique_review UNIQUE (user_id, advisor_id, appointment_id)
 );
 
 -- Messages table

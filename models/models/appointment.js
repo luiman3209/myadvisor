@@ -32,9 +32,8 @@ module.exports = (sequelize) => {
             allowNull: false,
         },
         is_reviewed: {
-            type: DataTypes.STRING(1),
+            type: DataTypes.BOOLEAN,
             allowNull: false,
-            defaultValue: 'N',
         },
         status: {
             type: DataTypes.STRING,

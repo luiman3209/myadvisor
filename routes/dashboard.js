@@ -137,8 +137,9 @@ router.get('/investor', passport.authenticate('jwt', { session: false }), async 
                 },
             },
             include: [{
-                model: Advisor,
-                include: [{ model: User, attributes: ['email'] }],
+                model: Advisor, attributes: ['office_address', 'img_url', 'contact_information'],
+                include: [{ model: Profile, attributes: ['first_name', 'last_name'] }],
+         
             }],
             order: [['start_time', 'ASC']],
         });
@@ -149,11 +150,14 @@ router.get('/investor', passport.authenticate('jwt', { session: false }), async 
                 user_id: userId,
             },
             include: [{
-                model: Advisor,
-                include: [{ model: User, attributes: ['email'] }],
+                model: Advisor, attributes: ['office_address', 'img_url', 'contact_information'],
+                include: [{ model: Profile, attributes: ['first_name', 'last_name'] }],
+            },{
+                model: Appointment, attributes: ['start_time', 'status', 'is_reviewed'],
+
             }],
             order: [['created_at', 'DESC']],
-            limit: 5,
+            limit: 10,
         });
 
         res.json({

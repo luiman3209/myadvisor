@@ -265,54 +265,6 @@ router.get('/:investorId', passport.authenticate('jwt', { session: false }), asy
     }
 });
 
-/**
- * @swagger
- * /investor/{investorId}/contact:
- *   get:
- *     summary: Get investor contact information
- *     tags:
- *       - Investor
- *     parameters:
- *       - in: path
- *         name: investorId
- *         required: true
- *         schema:
- *           type: integer
- *         description: The investor ID
- *     responses:
- *       200:
- *         description: Investor contact information
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 email:
- *                   type: string
- *                   example: "investor@example.com"
- *                 geo_preferences:
- *                   type: string
- *                   example: "North America"
- *       404:
- *         description: Investor not found
- */
-router.get('/:investorId/contact', passport.authenticate('jwt', { session: false }), async (req, res) => {
-    try {
-        const investor = await Investor.findByPk(req.params.investorId, {
-            include: [{ model: User, attributes: ['email'] }],
-        });
 
-        if (!investor) {
-            return res.status(404).json({ message: 'Investor not found' });
-        }
-
-        res.json({
-            email: investor.User.email,
-            geo_preferences: investor.geo_preferences,
-        });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
 
 module.exports = router;

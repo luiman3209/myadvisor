@@ -11,7 +11,7 @@ const { ServiceType, AdvisorService, InvestorService } = require('../models/mode
 
 /**
  * @swagger
- * /:
+ * /service:
  *   get:
  *     summary: Get all service types
  *     tags: [Service]
@@ -52,7 +52,7 @@ router.get('/', async (req, res) => {
 
 /**
  * @swagger
- * /{id}:
+ * /service/{id}:
  *   get:
  *     summary: Get a service type by ID
  *     tags: [Service]
@@ -160,62 +160,7 @@ router.get('/advisor/:advisor_id', async (req, res) => {
     }
 });
 
-/**
- * @swagger
- * /investor/{investor_id}:
- *   get:
- *     summary: Get service types by investor ID
- *     tags: [Service]
- *     description: Retrieve service types associated with a specific investor by the investor's ID.
- *     parameters:
- *       - in: path
- *         name: investor_id
- *         required: true
- *         schema:
- *           type: integer
- *         description: The ID of the investor.
- *     responses:
- *       200:
- *         description: A list of service types associated with the investor.
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 type: object
- *                 properties:
- *                   service_id:
- *                     type: integer
- *                   service_type_name:
- *                     type: string
- *                   is_active:
- *                     type: string
- *                   created_at:
- *                     type: string
- *                     format: date-time
- *                   updated_at:
- *                     type: string
- *                     format: date-time
- *       404:
- *         description: Investor not found or no associated service types.
- *       500:
- *         description: An error occurred while fetching the service types.
- */
-router.get('/investor/:investor_id', async (req, res) => {
-    const { investor_id } = req.params;
-    try {
-        const investorServices = await InvestorService.findAll({ where: { investor_id } });
-        if (investorServices.length > 0) {
-            const serviceIds = investorServices.map(is => is.service_id);
-            const serviceTypes = await ServiceType.findAll({ where: { service_id: serviceIds } });
-            res.json(serviceTypes);
-        } else {
-            res.status(404).json({ error: 'No service types found for the given investor ID.' });
-        }
-    } catch (error) {
-        res.status(500).json({ error: 'An error occurred while fetching the service types.' });
-    }
-});
+
 
 
 
