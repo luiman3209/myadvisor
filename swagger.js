@@ -20,11 +20,10 @@ const options = {
       { name: 'Messages', description: 'Messages endpoints' },
       { name: 'Profile', description: 'Profile endpoints' },
       { name: 'Search', description: 'Search endpoints' },
-      { name: 'User', description: 'User endpoints' },
       { name: 'Service', description: 'Services endpoints' },
     ],
   },
-  apis: ['./routes/*.js'], // Path to the API docs
+  apis: ['./routes/*.js'], 
 };
 
 const swaggerSpec = swaggerJSDoc(options);

@@ -23,40 +23,64 @@ const router = express.Router();
  *           type: integer
  *         description: Filter by service ID
  *         example: 1
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *         description: Page number for pagination
+ *         example: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *         description: Number of items per page
+ *         example: 10
  *     responses:
  *       200:
  *         description: A list of financial advisors matching the search criteria
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 type: object
- *                 properties:
- *                   advisor_id:
- *                     type: integer
- *                     example: 1
- *                   user_id:
- *                     type: integer
- *                     example: 1
- *                   operating_country_code:
- *                     type: string
- *                     example: "US"
- *                   qualifications:
- *                     type: string
- *                     example: "MBA, CFA"
- *                   expertise:
- *                     type: string
- *                     example: "Investment Management"
- *                   contact_information:
- *                     type: string
- *                     example: "contact@advisor.com"
- *                   name:
- *                     type: string
- *                     example: "John"
- *                   surname:
- *                     type: string
- *                     example: "Doe"
+ *               type: object
+ *               properties:
+ *                 totalItems:
+ *                   type: integer
+ *                   example: 50
+ *                 totalPages:
+ *                   type: integer
+ *                   example: 5
+ *                 currentPage:
+ *                   type: integer
+ *                   example: 1
+ *                 advisors:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       advisor_id:
+ *                         type: integer
+ *                         example: 1
+ *                       user_id:
+ *                         type: integer
+ *                         example: 1
+ *                       operating_country_code:
+ *                         type: string
+ *                         example: "US"
+ *                       qualifications:
+ *                         type: string
+ *                         example: "MBA, CFA"
+ *                       expertise:
+ *                         type: string
+ *                         example: "Investment Management"
+ *                       contact_information:
+ *                         type: string
+ *                         example: "contact@advisor.com"
+ *                       name:
+ *                         type: string
+ *                         example: "John"
+ *                       surname:
+ *                         type: string
+ *                         example: "Doe"
  *       500:
  *         description: Internal server error
  *         content:
@@ -69,44 +93,53 @@ const router = express.Router();
  *                   example: "Internal server error"
  */
 router.get('/advisors', async (req, res) => {
-  
-    try {
-      const { operating_country_code, service_id } = req.query;
-      console.log(req.query);
+  try {
+      const { operating_country_code, service_id, page = 1, limit = 10 } = req.query;
+
       if (!operating_country_code && !service_id) {
-        return res.status(400).json({ message: 'At least one of operating_country_code or service_id must be provided' });
+          return res.status(400).json({ message: 'At least one of operating_country_code or service_id must be provided' });
       }
-  
+
       const filters = {};
-  
       if (operating_country_code) {
-        filters.operating_country_code = operating_country_code;
+          filters.operating_country_code = operating_country_code;
       }
-  
+
       const includeServices = service_id ? {
-        model: ServiceType,
-        through: {
-          where: { service_id },
-        },
-      } : null;
-  
-      const advisors = await Advisor.findAll({
-        where: filters,
-        include: [
-          includeServices,
-          {
-            model: Profile,
-            attributes: ['first_name', 'last_name'],
-            required: true,
+          model: ServiceType,
+          through: {
+              where: { service_id },
           },
-        ].filter(Boolean), // Filter out null includes
+      } : null;
+
+      const offset = (page - 1) * limit;
+
+      const { count, rows } = await Advisor.findAndCountAll({
+          where: filters,
+          include: [
+              includeServices,
+              {
+                  model: Profile,
+                  attributes: ['first_name', 'last_name'],
+                  required: true,
+              },
+          ].filter(Boolean),
+          limit: parseInt(limit),
+          offset: parseInt(offset),
       });
-  
-      res.json(advisors);
-    } catch (error) {
+
+      const totalPages = Math.ceil(count / limit);
+
+      res.json({
+          totalItems: count,
+          totalPages: totalPages,
+          currentPage: parseInt(page),
+          advisors: rows
+      });
+  } catch (error) {
       res.status(500).json({ error: error.message });
-    }
-  });
+  }
+});
 
 
 module.exports = router;
