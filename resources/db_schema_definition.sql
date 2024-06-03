@@ -143,8 +143,9 @@ CREATE TABLE appointments (
 -- Reviews table
 CREATE TABLE reviews (
     review_id INT PRIMARY KEY DEFAULT nextval('review_id_seq'),
-    user_id INT REFERENCES user_configs(user_id) ON DELETE CASCADE,
+    user_id INT REFERENCES user_configs(user_id) ON DELETE NO ACTION,
     advisor_id INT REFERENCES advisors(advisor_id) ON DELETE CASCADE,
+    appointment_id INT REFERENCES advisors(advisor_id) ON DELETE NO ACTION,
     rating INT CHECK (rating BETWEEN 1 AND 5),
     review TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

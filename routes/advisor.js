@@ -126,8 +126,10 @@ router.put('/', passport.authenticate('jwt', { session: false }), async (req, re
         operating_city_code
     } = req.body;
     const user_id = req.user.id;
+
     if (!user_id || !qualifications || !expertise || !contact_information || !start_shift_1 || !end_shift_1 || !operating_country_code || !office_address || !operating_city_code) {
-        return res.status(400).json({ message: 'Missing required fields' });
+        return res.status(400).json({ message: 'Missing required fields', providedFields: { user_id, qualifications,
+             expertise, contact_information, start_shift_1, end_shift_1, operating_country_code, office_address, operating_city_code }});
     }
 
     try {
@@ -499,13 +501,37 @@ router.get('/:advisor_id', async (req, res) => {
  */
 router.post('/:advisorId/review', passport.authenticate('jwt', { session: false }), async (req, res) => {
     try {
-        const { rating, review } = req.body;
-        const { advisorId } = req.params;
+        const { rating, review, appointmentId } = req.body;
         const userId = req.user.id;
+
+        
+
+        if(!appointmentId || !rating || !review) {
+            return res.status(400).json({ message: 'Rating and review are required' });
+        }
+
+        if(rating < 1 || rating > 5) {
+            return res.status(400).json({ message: 'Rating must be between 1 and 5' });
+        }
+
+        if(review.length < 10) {
+            return res.status(400).json({ message: 'Review must be at least 10 characters long' });
+        }
+
+        // Check if the appointment exists and is not reviewed
+        const appointment = await Appointment.findOne({ where: { appointment_id: appointmentId} });
+
+        if(!appointment) {
+            return res.status(400).json({ message: 'Invalid appointment ID' });
+        }
+
+        if(appointment.reviewed) {
+            return res.status(400).json({ message: 'Appointment already reviewed' });
+        }
 
         const newReview = await Review.create({
             user_id: userId,
-            advisor_id: advisorId,
+            advisor_id: appointment.advisor_id,
             rating,
             review,
         });
