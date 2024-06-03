@@ -50,6 +50,9 @@ Review.belongsTo(User, { foreignKey: 'user_id' });
 Advisor.hasMany(Review, { foreignKey: 'advisor_id' });
 Review.belongsTo(Advisor, { foreignKey: 'advisor_id' });
 
+Appointment.hasOne(Review, { foreignKey: 'appointment_id' });
+Review.belongsTo(Appointment, { foreignKey: 'appointment_id' });
+
 User.hasMany(Message, { foreignKey: 'sender_id' });
 User.hasMany(Message, { foreignKey: 'receiver_id' });
 Message.belongsTo(User, { as: 'Sender', foreignKey: 'sender_id' });

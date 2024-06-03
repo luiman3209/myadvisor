@@ -64,6 +64,15 @@ router.post('/register', async (req, res) => {
     try {
         const { email, password, role } = req.body;
 
+        // Check if the email is already in use
+        if (await User.findOne({ where: { email } })) {
+            return res.status(400).json({ error: 'Email already in use' });
+        }
+
+        if(role !== 'user' && role !== 'advisor') {
+            return res.status(400).json({ error: 'Invalid role' });
+        }
+
         // Create the user with hashed password
         const user = await User.create({ email, password_hash: password, role });
 
