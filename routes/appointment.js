@@ -309,6 +309,7 @@ function convertToTime(date, timeString) {
 }
 
 router.post('/free-windows/:advisorId', async (req, res) => {
+
     try {
         const advisorId = req.params.advisorId;
         const { startDate, endDate } = req.body;

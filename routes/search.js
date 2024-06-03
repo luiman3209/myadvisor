@@ -1,7 +1,7 @@
 const express = require('express');
 const { Op } = require('sequelize');
 const { Advisor, Profile, Review } = require('../models/models');
-
+const { ServiceType } = require('../models/models');
 const router = express.Router();
 /**
  * @swagger
@@ -69,9 +69,10 @@ const router = express.Router();
  *                   example: "Internal server error"
  */
 router.get('/advisors', async (req, res) => {
+  
     try {
       const { operating_country_code, service_id } = req.query;
-  
+      console.log(req.query);
       if (!operating_country_code && !service_id) {
         return res.status(400).json({ message: 'At least one of operating_country_code or service_id must be provided' });
       }

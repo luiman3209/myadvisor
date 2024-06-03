@@ -33,7 +33,7 @@ Profile.belongsTo(User, { foreignKey: 'user_id' });
 
 User.hasOne(Advisor, { foreignKey: 'user_id' });
 Advisor.belongsTo(User, { foreignKey: 'user_id' });
-Advisor.belongsTo(Profile, { foreignKey: 'user_id' });
+Advisor.belongsTo(Profile, { foreignKey: 'user_id', targetKey: 'user_id' });
 
 User.hasOne(Investor, { foreignKey: 'user_id' });
 Investor.belongsTo(User, { foreignKey: 'user_id' });

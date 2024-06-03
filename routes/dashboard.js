@@ -7,7 +7,7 @@ const router = express.Router();
 
 /**
  * @swagger
- * /dashboard/user:
+ * /dashboard/investor:
  *   get:
  *     summary: User Dashboard - Overview of user’s upcoming appointments, booked advisors, and recent activity
  *     tags:
@@ -125,7 +125,7 @@ const router = express.Router();
  *                                 type: string
  *                                 example: 'advisor@example.com'
  */
-router.get('/user', passport.authenticate('jwt', { session: false }), async (req, res) => {
+router.get('/investor', passport.authenticate('jwt', { session: false }), async (req, res) => {
     try {
         const userId = req.user.id;
 
@@ -142,17 +142,7 @@ router.get('/user', passport.authenticate('jwt', { session: false }), async (req
             }],
             order: [['start_time', 'ASC']],
         });
-
-        const bookedAdvisors = await Appointment.findAll({
-            where: {
-                user_id: userId,
-            },
-            include: [{
-                model: Advisor,
-                include: [{ model: User, attributes: ['email'] }],
-            }],
-            group: ['advisor_id'],
-        });
+    
 
         const recentActivity = await Review.findAll({
             where: {
@@ -168,7 +158,6 @@ router.get('/user', passport.authenticate('jwt', { session: false }), async (req
 
         res.json({
             upcomingAppointments,
-            bookedAdvisors,
             recentActivity,
         });
     } catch (error) {
