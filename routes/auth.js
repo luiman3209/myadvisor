@@ -69,7 +69,7 @@ router.post('/register', async (req, res) => {
             return res.status(400).json({ error: 'Email already in use' });
         }
 
-        if(role !== 'user' && role !== 'advisor') {
+        if (role !== 'investor' && role !== 'advisor' && role !== 'admin') {
             return res.status(400).json({ error: 'Invalid role' });
         }
 

@@ -74,7 +74,7 @@ ServiceType.belongsToMany(Investor, { through: InvestorService, foreignKey: 'ser
 Investor.hasMany(InvestorService, { foreignKey: 'investor_id' });
 InvestorService.belongsTo(Investor, { foreignKey: 'investor_id' });
 
-if (env === 'test') {
+if (env === 'test' || (env === 'development' && !config.use_env_variable)) {
     sequelize.sync({ force: true }).then(() => {
         console.log('Tables created');
     }).catch(error => {
