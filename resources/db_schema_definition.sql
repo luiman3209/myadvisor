@@ -141,7 +141,7 @@ CREATE TABLE myadvisor.appointments (
 
 
 -- Reviews table
-CREATE TABLE reviews (
+CREATE TABLE myadvisor.reviews (
     review_id INT PRIMARY KEY DEFAULT nextval('review_id_seq'),
     user_id INT REFERENCES user_configs(user_id) ON DELETE NO ACTION,
     advisor_id INT REFERENCES advisors(advisor_id) ON DELETE CASCADE,

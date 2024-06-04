@@ -8,6 +8,7 @@ const advisorRoutes = require('./routes/advisor');
 const investorRoutes = require('./routes/investor');
 const appointmentRoutes = require('./routes/appointment');
 const dashboardRoutes = require('./routes/dashboard');
+const reviewRoutes = require('./routes/review');
 //const paymentRoutes = require('./routes/payment');
 const adminRoutes = require('./routes/admin');
 const messageRoutes = require('./routes/message');
@@ -42,6 +43,7 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/message', messageRoutes);
 app.use('/api/services', serviceRoutes);
+app.use('/api/reviews', reviewRoutes);
 
 const PORT = process.env.PORT || 4000;
 

@@ -21,9 +21,10 @@ const options = {
       { name: 'Profile', description: 'Profile endpoints' },
       { name: 'Search', description: 'Search endpoints' },
       { name: 'Service', description: 'Services endpoints' },
+      { name: 'Reviews', description: 'Reviews endpoints' },
     ],
   },
-  apis: ['./routes/*.js'], 
+  apis: ['./routes/*.js'],
 };
 
 const swaggerSpec = swaggerJSDoc(options);
