@@ -75,6 +75,7 @@ CREATE TABLE myadvisor.investors (
 CREATE TABLE myadvisor.advisors (
     advisor_id SERIAL PRIMARY KEY,
     user_id INT REFERENCES myadvisor.user_configs(user_id) ON DELETE CASCADE,
+    display_name TEXT NOT NULL,
     qualifications TEXT,
     expertise TEXT,
     office_address TEXT NOT NULL,

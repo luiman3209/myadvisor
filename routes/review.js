@@ -1,6 +1,6 @@
 const express = require('express');
 const { Op } = require('sequelize');
-const { Review } = require('../models/models');
+const { Review, Advisor, User, Profile } = require('../models/models');
 const router = express.Router();
 
 /**
@@ -67,7 +67,14 @@ router.get('/latest-reviews', async (req, res) => {
         if (limit > 100) return res.status(400).json({ error: 'Limit must be less than 100' });
 
         const reviews = await Review.findAll({
-            order: [['created_at', 'DESC']],
+            include: [
+                { model: Advisor, attributes: ['display_name', 'img_url'], required: true },
+                {
+                    model: User, attributes: [],
+                    include: [{ model: Profile, atttributes: ['first_name'] }],
+                    required: true
+                },],
+            order: [['rating', 'DESC'], ['created_at', 'DESC']],
             limit: parseInt(limit),
         });
 
