@@ -2,53 +2,15 @@ const express = require('express');
 const router = express.Router();
 const { Qualification, AdvisorQualification } = require('../models/models');
 
-/**
- * @swagger
- * tags:
- *   name: Qualification
- *   description: Qualification type management
- */
 
-/**
- * @swagger
- * /service:
- *   get:
- *     summary: Get all qualifications
- *     tags: [Qualification]
- *     description: Retrieve a list of all qualifications.
- *     responses:
- *       200:
- *         description: A list of qualifications.
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 type: object
- *                 properties:
- *                   service_id:
- *                     type: integer
- *                   service_type_name:
- *                     type: string
- *                   is_active:
- *                     type: string
- *                   created_at:
- *                     type: string
- *                     format: date-time
- *                   updated_at:
- *                     type: string
- *                     format: date-time
- *       500:
- *         description: An error occurred while fetching qualifications.
- */
 router.get('/', async (req, res) => {
     try {
-        console.log('Fetching qualifications')
-        const serviceTypes = await Qualification.findAll();
-        res.json(serviceTypes);
+
+        const qualifications = await Qualification.findAll();
+        res.json(qualifications);
     } catch (error) {
         console.log(error);
-        res.status(500).json({ error: 'An error occurred while fetching qualifications.' });
+        res.status(500).json({ error });
     }
 });
 

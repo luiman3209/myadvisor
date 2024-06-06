@@ -20,18 +20,9 @@ module.exports = (sequelize) => {
             },
             field: 'qualification_id',
         },
-        createdAt: {
-            type: DataTypes.DATE,
-            defaultValue: DataTypes.NOW,
-            field: 'created_at'
-        },
-        updatedAt: {
-            type: DataTypes.DATE,
-            defaultValue: DataTypes.NOW,
-            field: 'updated_at'
-        },
+
     }, {
-        timestamps: true,
+        timestamps: false,
         primaryKey: ['advisor_id', 'qualification_id'],
     });
 };

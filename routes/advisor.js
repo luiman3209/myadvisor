@@ -71,8 +71,8 @@ router.put('/', passport.authenticate('jwt', { session: false }), async (req, re
         if (Array.isArray(qualifications)) {
             await AdvisorQualification.destroy({ where: { advisorId: advisor.advisor_id } });
             const advisorQualifications = qualifications.map(qualificationId => ({
-                advisorId: advisor.advisor_id,
-                qualificationId
+                advisor_id: advisor.advisor_id,
+                qualification_id: qualificationId
             }));
             await AdvisorQualification.bulkCreate(advisorQualifications);
         }
@@ -415,8 +415,8 @@ router.get('/:advisor_id', async (req, res) => {
 
         // Fetch qualifications for the advisor
         const advisorQualifications = await AdvisorQualification.findAll({ where: { advisorId: advisor_id } });
-        const qualificationIds = advisorQualifications.map(aq => aq.qualificationId);
-        const qualifications = await Qualification.findAll({ where: { id: qualificationIds } });
+        const qualificationIds = advisorQualifications.map(aq => aq.qualification_id);
+        const qualifications = await Qualification.findAll({ where: { qualification_id: qualificationIds } });
 
         res.json({
             advisor: {

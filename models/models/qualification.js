@@ -15,17 +15,7 @@ module.exports = (sequelize) => {
             type: DataTypes.STRING(10),
             allowNull: false,
         },
-        createdAt: {
-            type: DataTypes.DATE,
-            defaultValue: DataTypes.NOW,
-            field: 'created_at'
-        },
-        updatedAt: {
-            type: DataTypes.DATE,
-            defaultValue: DataTypes.NOW,
-            field: 'updated_at'
-        },
     }, {
-        timestamps: true,
+        timestamps: false,
     });
 };
