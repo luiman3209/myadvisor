@@ -31,8 +31,6 @@ module.exports = (sequelize) => {
             type: DataTypes.TEXT,
             allowNull: false,
         },
-        qualifications: DataTypes.TEXT,
-        expertise: DataTypes.TEXT,
         contact_information: DataTypes.TEXT,
         start_shift_1: {
             type: DataTypes.TEXT,

@@ -189,11 +189,12 @@ router.put('/', passport.authenticate('jwt', { session: false }), async (req, re
                 preferences,
                 visibility
             });
+            console.log('profile registered');
             return res.status(200).json({ message: 'Profile created successfully', profile });
         } catch (e) {
             res.status(400).json({ message: 'Error saving profile info', error: e })
         }
-        
+
     }
     try {
         // Update existing profile

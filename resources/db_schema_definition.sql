@@ -76,8 +76,6 @@ CREATE TABLE myadvisor.advisors (
     advisor_id SERIAL PRIMARY KEY,
     user_id INT REFERENCES myadvisor.user_configs(user_id) ON DELETE CASCADE,
     display_name TEXT NOT NULL,
-    qualifications TEXT,
-    expertise TEXT,
     office_address TEXT NOT NULL,
     operating_city_code TEXT NOT NULL,
     operating_country_code TEXT NOT NULL,
@@ -96,6 +94,41 @@ CREATE TABLE myadvisor.advisors (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     img_url TEXT
 );
+
+CREATE TABLE myadvisor.qualifications (
+    qualification_id SERIAL PRIMARY KEY,
+    qualification_name VARCHAR(100) NOT NULL,
+    abbreviation VARCHAR(10) NOT NULL
+);
+
+INSERT INTO qualifications (qualification_id, qualification_name, abbreviation) VALUES (1, 'Certified Financial Planner', 'CFP');
+INSERT INTO qualifications (qualification_id, qualification_name, abbreviation) VALUES (2, 'Chartered Financial Analyst', 'CFA');
+INSERT INTO qualifications (qualification_id, qualification_name, abbreviation) VALUES (3, 'Certified Public Accountant', 'CPA');
+INSERT INTO qualifications (qualification_id, qualification_name, abbreviation) VALUES (4, 'Certified Investment Management Analyst', 'CIMA');
+INSERT INTO qualifications (qualification_id, qualification_name, abbreviation) VALUES (5, 'Certified Fund Specialist', 'CFS');
+INSERT INTO qualifications (qualification_id, qualification_name, abbreviation) VALUES (6, 'Certified Private Wealth Advisor', 'CPWA');
+INSERT INTO qualifications (qualification_id, qualification_name, abbreviation) VALUES (7, 'Chartered Life Underwriter', 'CLU');
+INSERT INTO qualifications (qualification_id, qualification_name, abbreviation) VALUES (8, 'Chartered Financial Consultant', 'ChFC');
+INSERT INTO qualifications (qualification_id, qualification_name, abbreviation) VALUES (9, 'Financial Risk Manager', 'FRM');
+INSERT INTO qualifications (qualification_id, qualification_name, abbreviation) VALUES (10, 'Accredited Asset Management Specialist', 'AAMS');
+INSERT INTO qualifications (qualification_id, qualification_name, abbreviation) VALUES (11, 'Series 6 License', 'Series 6');
+INSERT INTO qualifications (qualification_id, qualification_name, abbreviation) VALUES (12, 'Series 7 License', 'Series 7');
+INSERT INTO qualifications (qualification_id, qualification_name, abbreviation) VALUES (13, 'Series 65 License', 'Series 65');
+INSERT INTO qualifications (qualification_id, qualification_name, abbreviation) VALUES (14, 'Series 66 License', 'Series 66');
+INSERT INTO qualifications (qualification_id, qualification_name, abbreviation) VALUES (15, 'Certified Trust and Fiduciary Advisor', 'CTFA');
+INSERT INTO qualifications (qualification_id, qualification_name, abbreviation) VALUES (16, 'Accredited Investment Fiduciary', 'AIF');
+INSERT INTO qualifications (qualification_id, qualification_name, abbreviation) VALUES (17, 'Retirement Income Certified Professional', 'RICP');
+INSERT INTO qualifications (qualification_id, qualification_name, abbreviation) VALUES (18, 'Certified Retirement Counselor', 'CRC');
+
+
+CREATE TABLE myadvisor.advisor_qualifications (
+    advisor_id INT NOT NULL,
+    qualification_id INT NOT NULL,
+    PRIMARY KEY (advisor_id, qualification_id),
+    FOREIGN KEY (advisor_id) REFERENCES myadvisor.advisors(advisor_id) ON DELETE CASCADE,
+    FOREIGN KEY (qualification_id) REFERENCES myadvisor.qualifications(qualification_id) ON DELETE CASCADE
+);
+
 
 -- [['retirement_planning', 'investment_management', 'tax_planning', 'estate_planning', 'insurance_planning', 
 -- 'education_planning', 'debt_management', 'small_business_planning', 'divorce_planning', 'elder_care_planning', 

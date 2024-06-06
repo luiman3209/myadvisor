@@ -25,7 +25,7 @@ describe('Search Routes', () => {
                 {
                     id: 1,
                     location: 'New York',
-                    expertise: 'Retirement Planning',
+
                     services_offered: 'Investment Advice',
                     Profile: { user_id: 1 },
                     Reviews: [{ rating: 5 }]
@@ -38,7 +38,6 @@ describe('Search Routes', () => {
                 .get('/search/advisors')
                 .query({
                     location: 'New York',
-                    expertise: 'Retirement Planning',
                     services: 'Investment Advice',
                     rating_min: 4,
                     rating_max: 5
@@ -55,7 +54,7 @@ describe('Search Routes', () => {
                 .get('/search/advisors')
                 .query({
                     location: 'New York',
-                    expertise: 'Retirement Planning',
+
                     services: 'Investment Advice',
                     rating_min: 4,
                     rating_max: 5

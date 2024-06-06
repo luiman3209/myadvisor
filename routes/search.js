@@ -69,9 +69,6 @@ const router = express.Router();
  *                       qualifications:
  *                         type: string
  *                         example: "MBA, CFA"
- *                       expertise:
- *                         type: string
- *                         example: "Investment Management"
  *                       contact_information:
  *                         type: string
  *                         example: "contact@advisor.com"
@@ -93,52 +90,52 @@ const router = express.Router();
  *                   example: "Internal server error"
  */
 router.get('/advisors', async (req, res) => {
-  try {
-      const { operating_country_code, service_id, page = 1, limit = 10 } = req.query;
+    try {
+        const { operating_country_code, service_id, page = 1, limit = 10 } = req.query;
 
-      if (!operating_country_code && !service_id) {
-          return res.status(400).json({ message: 'At least one of operating_country_code or service_id must be provided' });
-      }
+        if (!operating_country_code && !service_id) {
+            return res.status(400).json({ message: 'At least one of operating_country_code or service_id must be provided' });
+        }
 
-      const filters = {};
-      if (operating_country_code) {
-          filters.operating_country_code = operating_country_code;
-      }
+        const filters = {};
+        if (operating_country_code) {
+            filters.operating_country_code = operating_country_code;
+        }
 
-      const includeServices = service_id ? {
-          model: ServiceType,
-          through: {
-              where: { service_id },
-          },
-      } : null;
+        const includeServices = service_id ? {
+            model: ServiceType,
+            through: {
+                where: { service_id },
+            },
+        } : null;
 
-      const offset = (page - 1) * limit;
+        const offset = (page - 1) * limit;
 
-      const { count, rows } = await Advisor.findAndCountAll({
-          where: filters,
-          include: [
-              includeServices,
-              {
-                  model: Profile,
-                  attributes: ['first_name', 'last_name'],
-                  required: true,
-              },
-          ].filter(Boolean),
-          limit: parseInt(limit),
-          offset: parseInt(offset),
-      });
+        const { count, rows } = await Advisor.findAndCountAll({
+            where: filters,
+            include: [
+                includeServices,
+                {
+                    model: Profile,
+                    attributes: ['first_name', 'last_name'],
+                    required: true,
+                },
+            ].filter(Boolean),
+            limit: parseInt(limit),
+            offset: parseInt(offset),
+        });
 
-      const totalPages = Math.ceil(count / limit);
+        const totalPages = Math.ceil(count / limit);
 
-      res.json({
-          totalItems: count,
-          totalPages: totalPages,
-          currentPage: parseInt(page),
-          advisors: rows
-      });
-  } catch (error) {
-      res.status(500).json({ error: error.message });
-  }
+        res.json({
+            totalItems: count,
+            totalPages: totalPages,
+            currentPage: parseInt(page),
+            advisors: rows
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
 });
 
 

@@ -1,120 +1,13 @@
 const express = require('express');
 const passport = require('passport');
 const { Advisor, Review, Profile, User } = require('../models/models');
-const { ServiceType, AdvisorService } = require('../models/models');
+const { Qualification, AdvisorQualification, AdvisorService } = require('../models/models');
 const router = express.Router();
 
 
-
-/**
- * @swagger
- * /advisor:
- *   put:
- *     summary: Create or update an advisor profile
- *     tags:
- *       - Advisor
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               user_id:
- *                 type: integer
- *                 example: 1
- *               qualifications:
- *                 type: string
- *                 example: "MBA, CFA"
- *               expertise:
- *                 type: string
- *                 example: "Investment Management"
- *               contact_information:
- *                 type: string
- *                 example: "contact@advisor.com"
- *               start_shift_1:
- *                 type: string
- *                 format: date-time
- *                 example: "2023-05-01T09:00:00Z"
- *               end_shift_1:
- *                 type: string
- *                 format: date-time
- *                 example: "2023-05-01T17:00:00Z"
- *               start_shift_2:
- *                 type: string
- *                 format: date-time
- *                 example: "2023-05-01T18:00:00Z"
- *               end_shift_2:
- *                 type: string
- *                 format: date-time
- *                 example: "2023-05-01T20:00:00Z"
- *               selected_service_types:
- *                 type: array
- *                 items:
- *                   type: integer
- *                 example: [1, 2, 3]
- *               operating_country_code:
- *                 type: string
- *                 example: "US"
- *               office_address:
- *                 type: string
- *                 example: "123 Main St, Suite 400"
- *               operating_city_code:
- *                 type: string
- *                 example: "NYC"
- *     responses:
- *       200:
- *         description: Advisor profile created or updated successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                 advisor:
- *                   type: object
- *                   properties:
- *                     advisor_id:
- *                       type: integer
- *                     user_id:
- *                       type: integer
- *                     qualifications:
- *                       type: string
- *                     expertise:
- *                       type: string
- *                     contact_information:
- *                       type: string
- *                     start_shift_1:
- *                       type: string
- *                       format: date-time
- *                     end_shift_1:
- *                       type: string
- *                       format: date-time
- *                     start_shift_2:
- *                       type: string
- *                       format: date-time
- *                     end_shift_2:
- *                       type: string
- *                       format: date-time
- *                     profile_views:
- *                       type: integer
- *                     operating_country_code:
- *                       type: string
- *                     office_address:
- *                       type: string
- *                     operating_city_code:
- *                       type: string
- *       400:
- *         description: Invalid input data
- *       500:
- *         description: Server error
- */
-
 router.put('/', passport.authenticate('jwt', { session: false }), async (req, res) => {
     const {
-        qualifications,
-        expertise,
+        qualifications, // array of qualification IDs
         contact_information,
         start_shift_1,
         end_shift_1,
@@ -127,11 +20,18 @@ router.put('/', passport.authenticate('jwt', { session: false }), async (req, re
     } = req.body;
     const user_id = req.user.id;
 
-    if (!user_id || !qualifications || !expertise || !contact_information || !start_shift_1 || !end_shift_1 || !operating_country_code || !office_address || !operating_city_code) {
+    if (!user_id || !qualifications || !contact_information || !start_shift_1 || !end_shift_1 || !operating_country_code || !office_address || !operating_city_code) {
         return res.status(400).json({
-            message: 'Missing required fields', providedFields: {
-                user_id, qualifications,
-                expertise, contact_information, start_shift_1, end_shift_1, operating_country_code, office_address, operating_city_code
+            message: 'Missing required fields',
+            providedFields: {
+                user_id,
+                qualifications,
+                contact_information,
+                start_shift_1,
+                end_shift_1,
+                operating_country_code,
+                office_address,
+                operating_city_code
             }
         });
     }
@@ -141,8 +41,6 @@ router.put('/', passport.authenticate('jwt', { session: false }), async (req, re
 
         if (advisor) {
             // Update existing advisor
-            advisor.qualifications = qualifications;
-            advisor.expertise = expertise;
             advisor.contact_information = contact_information;
             advisor.start_shift_1 = start_shift_1;
             advisor.end_shift_1 = end_shift_1;
@@ -156,8 +54,6 @@ router.put('/', passport.authenticate('jwt', { session: false }), async (req, re
             // Create new advisor
             advisor = await Advisor.create({
                 user_id,
-                qualifications,
-                expertise,
                 contact_information,
                 start_shift_1,
                 end_shift_1,
@@ -171,6 +67,16 @@ router.put('/', passport.authenticate('jwt', { session: false }), async (req, re
 
         await advisor.save();
 
+        // Update advisor qualifications
+        if (Array.isArray(qualifications)) {
+            await AdvisorQualification.destroy({ where: { advisorId: advisor.advisor_id } });
+            const advisorQualifications = qualifications.map(qualificationId => ({
+                advisorId: advisor.advisor_id,
+                qualificationId
+            }));
+            await AdvisorQualification.bulkCreate(advisorQualifications);
+        }
+
         // Update advisor service types
         if (selected_service_types && Array.isArray(selected_service_types)) {
             await AdvisorService.destroy({ where: { advisor_id: advisor.advisor_id } });
@@ -180,10 +86,11 @@ router.put('/', passport.authenticate('jwt', { session: false }), async (req, re
             }));
             await AdvisorService.bulkCreate(advisorServices);
         }
-
+        console.log('advisor registered');
         res.json({ message: 'Advisor profile created or updated successfully', advisor });
 
     } catch (error) {
+        console.log(error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -206,15 +113,43 @@ router.put('/', passport.authenticate('jwt', { session: false }), async (req, re
  *                 advisor:
  *                   type: object
  *                   properties:
- *                     id:
+ *                     advisor_id:
  *                       type: integer
  *                       example: 1
  *                     user_id:
  *                       type: integer
  *                       example: 1
- *                     specialty:
+ *                     contact_information:
  *                       type: string
- *                       example: Financial Advisor
+ *                       example: contact@advisor.com
+ *                     start_shift_1:
+ *                       type: string
+ *                       format: date-time
+ *                       example: "2023-05-01T09:00:00Z"
+ *                     end_shift_1:
+ *                       type: string
+ *                       format: date-time
+ *                       example: "2023-05-01T17:00:00Z"
+ *                     start_shift_2:
+ *                       type: string
+ *                       format: date-time
+ *                       example: "2023-05-01T18:00:00Z"
+ *                     end_shift_2:
+ *                       type: string
+ *                       format: date-time
+ *                       example: "2023-05-01T20:00:00Z"
+ *                     profile_views:
+ *                       type: integer
+ *                       example: 100
+ *                     operating_country_code:
+ *                       type: string
+ *                       example: "US"
+ *                     office_address:
+ *                       type: string
+ *                       example: "123 Main St, Suite 400"
+ *                     operating_city_code:
+ *                       type: string
+ *                       example: "NYC"
  *                 profileReviews:
  *                   type: array
  *                   items:
@@ -250,8 +185,26 @@ router.put('/', passport.authenticate('jwt', { session: false }), async (req, re
  *                         type: string
  *                         example: "FP"
  *                       is_active:
+ *                         type: boolean
+ *                         example: true
+ *                 qualifications:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                         example: 1
+ *                       name:
  *                         type: string
- *                         example: "Y"
+ *                         example: "Certified Financial Planner"
+ *                       abbreviation:
+ *                         type: string
+ *                         example: "CFP"
+ *       404:
+ *         description: Advisor not found
+ *       500:
+ *         description: Server error
  */
 router.get('/', passport.authenticate('jwt', { session: false }), async (req, res) => {
     try {
@@ -273,15 +226,23 @@ router.get('/', passport.authenticate('jwt', { session: false }), async (req, re
         const serviceIds = advisorServices.map(as => as.service_id);
         const serviceTypes = await ServiceType.findAll({ where: { service_id: serviceIds } });
 
+        // Fetch qualifications for the advisor
+        const advisorQualifications = await AdvisorQualification.findAll({ where: { advisorId: advisor.advisor_id } });
+        const qualificationIds = advisorQualifications.map(aq => aq.qualificationId);
+        const qualifications = await Qualification.findAll({ where: { id: qualificationIds } });
+
         res.json({
             advisor,
             profileReviews,
             serviceTypes,
+            qualifications,
         });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
+
+
 
 /**
  * @swagger
@@ -318,26 +279,38 @@ router.get('/', passport.authenticate('jwt', { session: false }), async (req, re
  *                       type: string
  *                       example: "US"
  *                     qualifications:
- *                       type: string
- *                       example: "MBA, CFA"
- *                     expertise:
- *                       type: string
- *                       example: "Investment Management"
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: integer
+ *                             example: 1
+ *                           name:
+ *                             type: string
+ *                             example: "Certified Financial Planner"
+ *                           abbreviation:
+ *                             type: string
+ *                             example: "CFP"
  *                     contact_information:
  *                       type: string
  *                       example: "contact@advisor.com"
  *                     start_shift_1:
  *                       type: string
  *                       format: date-time
+ *                       example: "2023-05-01T09:00:00Z"
  *                     end_shift_1:
  *                       type: string
  *                       format: date-time
+ *                       example: "2023-05-01T17:00:00Z"
  *                     start_shift_2:
  *                       type: string
  *                       format: date-time
+ *                       example: "2023-05-01T18:00:00Z"
  *                     end_shift_2:
  *                       type: string
  *                       format: date-time
+ *                       example: "2023-05-01T20:00:00Z"
  *                     profile_views:
  *                       type: integer
  *                       example: 0
@@ -385,8 +358,13 @@ router.get('/', passport.authenticate('jwt', { session: false }), async (req, re
  *                         type: string
  *                         example: "FP"
  *                       is_active:
- *                         type: string
- *                         example: "Y"
+ *                         type: boolean
+ *                         example: true
+ *                 offices:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                   example: ["123 Main St, Suite 400"]
  *       404:
  *         description: Advisor not found
  *       500:
@@ -418,7 +396,7 @@ router.get('/:advisor_id', async (req, res) => {
             return res.status(404).json({ message: 'Advisor not found' });
         }
 
-        // update profile views
+        // Update profile views
         advisor.profile_views += 1;
         await advisor.save();
 
@@ -430,12 +408,15 @@ router.get('/:advisor_id', async (req, res) => {
             limit: 10,
         });
 
-        //Fetch service types for the advisor
-        //Fetch service types for the advisor
+        // Fetch service types for the advisor
         const advisorServices = await AdvisorService.findAll({ where: { advisor_id } });
         const serviceIds = advisorServices.map(as => as.service_id);
         const serviceTypes = await ServiceType.findAll({ where: { service_id: serviceIds } });
 
+        // Fetch qualifications for the advisor
+        const advisorQualifications = await AdvisorQualification.findAll({ where: { advisorId: advisor_id } });
+        const qualificationIds = advisorQualifications.map(aq => aq.qualificationId);
+        const qualifications = await Qualification.findAll({ where: { id: qualificationIds } });
 
         res.json({
             advisor: {
@@ -445,12 +426,14 @@ router.get('/:advisor_id', async (req, res) => {
             },
             profileReviews,
             serviceTypes,
+            qualifications,
             offices: [advisor.office_address],
         });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
+
 
 /**
  * @swagger

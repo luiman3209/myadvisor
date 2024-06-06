@@ -19,6 +19,8 @@ if (config.use_env_variable) {
 const User = require('./user')(sequelize);
 const Profile = require('./profile')(sequelize);
 const Advisor = require('./advisor')(sequelize);
+const Qualification = require('./qualification')(sequelize);
+const AdvisorQualification = require('./advisor_qualification')(sequelize);
 const Investor = require('./investor')(sequelize);
 const Appointment = require('./appointment')(sequelize);
 const Review = require('./review')(sequelize);
@@ -69,6 +71,15 @@ ServiceType.belongsToMany(Advisor, { through: AdvisorService, foreignKey: 'servi
 Advisor.hasMany(AdvisorService, { foreignKey: 'advisor_id' });
 AdvisorService.belongsTo(Advisor, { foreignKey: 'advisor_id' });
 
+
+Advisor.belongsToMany(Qualification, { through: AdvisorQualification, foreignKey: 'advisor_id', as: 'AdvisorQualifications' });
+Qualification.belongsToMany(Advisor, { through: AdvisorQualification, foreignKey: 'qualification_id', as: 'QualificationAdvisors' });
+Advisor.hasMany(AdvisorQualification, { foreignKey: 'advisor_id', as: 'AdvisorQualificationRecords' });
+AdvisorQualification.belongsTo(Advisor, { foreignKey: 'advisor_id', as: 'Advisor' });
+Qualification.hasMany(AdvisorQualification, { foreignKey: 'qualification_id', as: 'QualificationRecords' });
+AdvisorQualification.belongsTo(Qualification, { foreignKey: 'qualification_id', as: 'Qualification' });
+
+
 Investor.belongsToMany(ServiceType, { through: InvestorService, foreignKey: 'investor_id' });
 ServiceType.belongsToMany(Investor, { through: InvestorService, foreignKey: 'service_id' });
 Investor.hasMany(InvestorService, { foreignKey: 'investor_id' });
@@ -76,6 +87,21 @@ InvestorService.belongsTo(Investor, { foreignKey: 'investor_id' });
 
 if (env === 'test' || (env === 'development' && !config.use_env_variable)) {
     sequelize.sync({ force: true }).then(() => {
+        ServiceType.create({ service_type_name: 'Retirement Planning', service_type_code: 'RETIREMENT_PLANNING', is_active: 'Y' });
+        ServiceType.create({ service_type_name: 'Investment Management', service_type_code: 'INVESTMENT_MANAGEMENT', is_active: 'Y' });
+        ServiceType.create({ service_type_name: 'Tax Planning', service_type_code: 'TAX_PLANNING', is_active: 'Y' });
+        ServiceType.create({ service_type_name: 'Estate Planning', service_type_code: 'ESTATE_PLANNING', is_active: 'Y' });
+        ServiceType.create({ service_type_name: 'Insurance Planning', service_type_code: 'INSURANCE_PLANNING', is_active: 'Y' });
+        ServiceType.create({ service_type_name: 'Education Planning', service_type_code: 'EDUCATION_PLANNING', is_active: 'Y' });
+        ServiceType.create({ service_type_name: 'Debt Management', service_type_code: 'DEBT_MANAGEMENT', is_active: 'Y' });
+        ServiceType.create({ service_type_name: 'Small Business Planning', service_type_code: 'SMALL_BUSINESS_PLANNING', is_active: 'Y' });
+
+        Qualification.create({ qualification_id: 1, abbreviation: 'MBA', qualification_name: 'MBA', is_active: 'Y' });
+        Qualification.create({ qualification_id: 2, abbreviation: 'CFA', qualification_name: 'CFA', is_active: 'Y' });
+        Qualification.create({ qualification_id: 3, abbreviation: 'CFP', qualification_name: 'CFP', is_active: 'Y' });
+        Qualification.create({ qualification_id: 4, abbreviation: 'CPA', qualification_name: 'CPA', is_active: 'Y' });
+        Qualification.create({ qualification_id: 5, abbreviation: 'JD', qualification_name: 'JD', is_active: 'Y' });
+
         console.log('Tables created');
     }).catch(error => {
         console.error('Unable to create tables:', error);
@@ -94,5 +120,8 @@ module.exports = {
     Payment,
     ServiceType,
     AdvisorService,
-    InvestorService
+    InvestorService,
+    Qualification,
+    AdvisorQualification,
+
 };

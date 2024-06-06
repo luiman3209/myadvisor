@@ -1,6 +1,6 @@
 const request = require('supertest');
 const { Advisor, Profile, Review } = require('../models/models');
-const app = require('../app'); 
+const app = require('../app');
 
 
 describe('Search Routes', () => {
@@ -18,7 +18,7 @@ describe('Search Routes', () => {
                 {
                     id: 1,
                     location: 'New York',
-                    expertise: 'Retirement Planning',
+
                     Profile: { user_id: 1 },
                     Reviews: [{ rating: 5 }]
                 }
@@ -30,7 +30,6 @@ describe('Search Routes', () => {
                 .get('/search/advisors')
                 .query({
                     location: 'New York',
-                    expertise: 'Retirement Planning',
                     services: 'Investment Advice',
                     rating_min: 4,
                     rating_max: 5

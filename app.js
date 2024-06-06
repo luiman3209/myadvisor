@@ -13,11 +13,13 @@ const reviewRoutes = require('./routes/review');
 const adminRoutes = require('./routes/admin');
 const messageRoutes = require('./routes/message');
 const serviceRoutes = require('./routes/service');
+const qualificationRoutes = require('./routes/qualification');
 const helmet = require('helmet');
 
 const setupSwagger = require('./swagger');
 
 const cors = require('cors');
+
 require('./config/passport');
 
 const app = express();
@@ -43,6 +45,7 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/message', messageRoutes);
 app.use('/api/services', serviceRoutes);
+app.use('/api/qualifications', qualificationRoutes);
 app.use('/api/reviews', reviewRoutes);
 
 const PORT = process.env.PORT || 4000;
