@@ -9,7 +9,7 @@ router.get('/', async (req, res) => {
         const qualifications = await Qualification.findAll();
         res.json(qualifications);
     } catch (error) {
-        console.log(error);
+
         res.status(500).json({ error });
     }
 });

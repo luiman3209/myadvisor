@@ -84,7 +84,7 @@ router.post('/book', passport.authenticate('jwt', { session: false }), async (re
             },
         });
 
-        if(existingAppointment.length > 0) {
+        if (existingAppointment.length > 0) {
             return res.status(400).json({ message: 'Advisor is not available at this time' });
         }
 
@@ -284,7 +284,7 @@ router.put('/:appointmentId/status', passport.authenticate('jwt', { session: fal
             return res.status(404).json({ message: 'Appointment not found' });
         }
 
-        if(appointment.advisor_id !== req.user.id) {
+        if (appointment.advisor_id !== req.user.id) {
             return res.status(403).json({ message: 'You are not authorized to update this appointment' });
         }
 
@@ -377,7 +377,7 @@ router.post('/free-windows/:advisorId', async (req, res) => {
         if (diffDays > 10) {
             return res.status(400).send('Time range must be less than 10 days');
         }
-        
+
 
         // Get the advisor's working hours
         const advisor = await Advisor.findByPk(advisorId);
@@ -425,11 +425,11 @@ router.post('/free-windows/:advisorId', async (req, res) => {
                     return generateTimeSlots(start, end);
                 })
                 .flat();
-            
-       
+
+
             const availableSlots = allSlots.filter(slot => !bookedSlots.includes(slot));
             freeWindows[dateStr] = availableSlots;
-          
+
             // Move to the next day
             currentDate.setDate(currentDate.getDate() + 1);
         }

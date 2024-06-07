@@ -80,7 +80,7 @@ router.get('/latest-reviews', async (req, res) => {
 
         res.json({ reviews });
     } catch (error) {
-        console.log(error);
+
         res.status(500).json({ error: error.message });
     }
 });

@@ -16,11 +16,12 @@ router.put('/', passport.authenticate('jwt', { session: false }), async (req, re
         selected_service_types,
         operating_country_code,
         office_address,
-        operating_city_code
+        operating_city_code,
+        display_name,
     } = req.body;
     const user_id = req.user.id;
 
-    if (!user_id || !qualifications || !contact_information || !start_shift_1 || !end_shift_1 || !operating_country_code || !office_address || !operating_city_code) {
+    if (!user_id || !qualifications || !contact_information || !start_shift_1 || !end_shift_1 || !operating_country_code || !office_address || !operating_city_code || !display_name) {
         return res.status(400).json({
             message: 'Missing required fields',
             providedFields: {
@@ -31,7 +32,8 @@ router.put('/', passport.authenticate('jwt', { session: false }), async (req, re
                 end_shift_1,
                 operating_country_code,
                 office_address,
-                operating_city_code
+                operating_city_code,
+                display_name,
             }
         });
     }
@@ -49,6 +51,7 @@ router.put('/', passport.authenticate('jwt', { session: false }), async (req, re
             advisor.operating_country_code = operating_country_code;
             advisor.office_address = office_address;
             advisor.operating_city_code = operating_city_code;
+            advisor.display_name = display_name;
             advisor.updated_at = new Date();
         } else {
             // Create new advisor
@@ -61,7 +64,8 @@ router.put('/', passport.authenticate('jwt', { session: false }), async (req, re
                 end_shift_2,
                 operating_country_code,
                 office_address,
-                operating_city_code
+                operating_city_code,
+                display_name,
             });
         }
 
@@ -69,7 +73,7 @@ router.put('/', passport.authenticate('jwt', { session: false }), async (req, re
 
         // Update advisor qualifications
         if (Array.isArray(qualifications)) {
-            await AdvisorQualification.destroy({ where: { advisorId: advisor.advisor_id } });
+            await AdvisorQualification.destroy({ where: { advisor_id: advisor.advisor_id } });
             const advisorQualifications = qualifications.map(qualificationId => ({
                 advisor_id: advisor.advisor_id,
                 qualification_id: qualificationId
@@ -86,11 +90,11 @@ router.put('/', passport.authenticate('jwt', { session: false }), async (req, re
             }));
             await AdvisorService.bulkCreate(advisorServices);
         }
-        console.log('advisor registered');
+
         res.json({ message: 'Advisor profile created or updated successfully', advisor });
 
     } catch (error) {
-        console.log(error);
+
         res.status(500).json({ error: error.message });
     }
 });
@@ -227,7 +231,7 @@ router.get('/', passport.authenticate('jwt', { session: false }), async (req, re
         const serviceTypes = await ServiceType.findAll({ where: { service_id: serviceIds } });
 
         // Fetch qualifications for the advisor
-        const advisorQualifications = await AdvisorQualification.findAll({ where: { advisorId: advisor.advisor_id } });
+        const advisorQualifications = await AdvisorQualification.findAll({ where: { advisor_id: advisor.advisor_id } });
         const qualificationIds = advisorQualifications.map(aq => aq.qualificationId);
         const qualifications = await Qualification.findAll({ where: { id: qualificationIds } });
 
@@ -414,7 +418,7 @@ router.get('/:advisor_id', async (req, res) => {
         const serviceTypes = await ServiceType.findAll({ where: { service_id: serviceIds } });
 
         // Fetch qualifications for the advisor
-        const advisorQualifications = await AdvisorQualification.findAll({ where: { advisorId: advisor_id } });
+        const advisorQualifications = await AdvisorQualification.findAll({ where: { advisor_id: advisor_id } });
         const qualificationIds = advisorQualifications.map(aq => aq.qualification_id);
         const qualifications = await Qualification.findAll({ where: { qualification_id: qualificationIds } });
 

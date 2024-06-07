@@ -75,7 +75,7 @@ router.post('/register', async (req, res) => {
 
         // Create the user with hashed password
         const user = await User.create({ email, password_hash: password, role });
-        console.log('user registered');
+
 
         res.json({ message: 'User registered successfully', user });
     } catch (error) {
@@ -163,10 +163,7 @@ router.post('/check-email', async (req, res) => {
         const { email } = req.body;
         const user = await User.findOne({ where: { email } });
 
-        if (user) {
-            return res.status(400).json({ message: 'Email already in use' });
-        }
-        res.json({ message: 'Email available' });
+        res.json({ available: !user });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -177,10 +174,7 @@ router.post('/check-phone', async (req, res) => {
         const { phone_number } = req.body;
         const user = await Profile.findOne({ where: { phone_number } });
 
-        if (user) {
-            return res.status(400).json({ message: 'Phone number already in use' });
-        }
-        res.json({ message: 'Phone number  available' });
+        res.json({ available: !user });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
