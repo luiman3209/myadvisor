@@ -1,7 +1,7 @@
 const express = require('express');
 const passport = require('passport');
-const { Investor, User } = require('../models/models');
-const { ServiceType,  InvestorService } = require('../models/models');
+const { Investor, User, Profile } = require('../models/models');
+const { ServiceType, InvestorService } = require('../models/models');
 
 const router = express.Router();
 
@@ -69,7 +69,7 @@ router.put('/', passport.authenticate('jwt', { session: false }), async (req, re
     const { net_worth, income_range, geo_preferences, selected_service_types } = req.body;
     const user_id = req.user.id;
 
-    if (!user_id || !net_worth || !income_range) {
+    if (!user_id) {
         return res.status(400).json({ message: 'Missing required fields' });
     }
 
@@ -173,12 +173,14 @@ router.get('/', passport.authenticate('jwt', { session: false }), async (req, re
             return res.status(404).json({ message: 'Investor not found' });
         }
 
+        const userProfile = await Profile.findOne({ where: { user_id: req.user.id } });
+
         // Fetch service types for the investor
         const investorServices = await InvestorService.findAll({ where: { investor_id: investor.investor_id } });
         const serviceIds = investorServices.map(is => is.service_id);
         const serviceTypes = await ServiceType.findAll({ where: { service_id: serviceIds } });
 
-        res.json({ investor, serviceTypes });
+        res.json({ investor, userProfile, serviceTypes });
     } catch (error) {
         res.status(500).json({ error: error });
     }

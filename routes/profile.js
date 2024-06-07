@@ -175,7 +175,7 @@ router.get('/', passport.authenticate('jwt', { session: false }), async (req, re
  *                       example: true
  */
 router.put('/', passport.authenticate('jwt', { session: false }), async (req, res) => {
-    const { first_name, last_name, phone_number, address, preferences, visibility } = req.body;
+    const { first_name, last_name, phone_number, address, visibility } = req.body;
     let profile = await Profile.findOne({ where: { user_id: req.user.id } });
     if (!profile) {
         try {
@@ -186,7 +186,7 @@ router.put('/', passport.authenticate('jwt', { session: false }), async (req, re
                 last_name,
                 phone_number,
                 address,
-                preferences,
+
                 visibility
             });
 

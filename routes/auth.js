@@ -2,6 +2,7 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const { User, Profile } = require('../models/models');
 const router = express.Router();
+const passport = require('passport');
 
 /**
  * @swagger
@@ -175,6 +176,31 @@ router.post('/check-phone', async (req, res) => {
         const user = await Profile.findOne({ where: { phone_number } });
 
         res.json({ available: !user });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.put('/user/update', passport.authenticate('jwt', { session: false }), async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        const user = await User.findOne({ where: { user_id: req.user.id } });
+
+        // Check if user exists and if the password matches
+        if (!user || ! await user.validPassword(password)) {
+            return res.status(400).json({ message: 'Invalid email or password' });
+        }
+
+
+        if (email) {
+            await User.update({ email }, { where: { user_id: req.user.id } });
+        }
+
+        if (password) {
+            await User.update({ password_hash: password }, { where: { user_id: req.user.id } });
+        }
+
+        res.json({ message: 'User updated successfully', token });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
