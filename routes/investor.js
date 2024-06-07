@@ -66,7 +66,9 @@ const router = express.Router();
  */
 
 router.put('/', passport.authenticate('jwt', { session: false }), async (req, res) => {
-    const { net_worth, income_range, geo_preferences, selected_service_types } = req.body;
+
+    console.log(req.body);
+    const { net_worth, income_range, geo_preferences, selected_service_ids } = req.body;
     const user_id = req.user.id;
 
     if (!user_id) {
@@ -95,18 +97,22 @@ router.put('/', passport.authenticate('jwt', { session: false }), async (req, re
         await investor.save();
 
         // Update investor service types
-        if (selected_service_types && Array.isArray(selected_service_types)) {
+        if (selected_service_ids && Array.isArray(selected_service_ids)) {
+
             await InvestorService.destroy({ where: { investor_id: investor.investor_id } });
-            const investorServices = selected_service_types.map(service_id => ({
+            const investorServices = selected_service_ids.map(service_id => ({
                 investor_id: investor.investor_id,
                 service_id
             }));
             await InvestorService.bulkCreate(investorServices);
+
         }
+
 
         res.json({ message: 'Investor profile created or updated successfully', investor });
 
     } catch (error) {
+        console.log(error)
         res.status(500).json({ error: error.message });
     }
 });

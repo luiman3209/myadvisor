@@ -13,7 +13,7 @@ router.put('/', passport.authenticate('jwt', { session: false }), async (req, re
         end_shift_1,
         start_shift_2,
         end_shift_2,
-        selected_service_types,
+        selected_service_ids,
         operating_country_code,
         office_address,
         operating_city_code,
@@ -82,9 +82,9 @@ router.put('/', passport.authenticate('jwt', { session: false }), async (req, re
         }
 
         // Update advisor service types
-        if (selected_service_types && Array.isArray(selected_service_types)) {
+        if (selected_service_ids && Array.isArray(selected_service_ids)) {
             await AdvisorService.destroy({ where: { advisor_id: advisor.advisor_id } });
-            const advisorServices = selected_service_types.map(service_id => ({
+            const advisorServices = selected_service_ids.map(service_id => ({
                 advisor_id: advisor.advisor_id,
                 service_id
             }));
