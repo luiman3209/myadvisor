@@ -23,7 +23,6 @@ module.exports = (sequelize) => {
             unique: true,
         },
         address: DataTypes.TEXT,
-        preferences: DataTypes.TEXT,
         visibility: {
             type: DataTypes.STRING,
             allowNull: false,

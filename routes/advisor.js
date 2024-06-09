@@ -1,7 +1,7 @@
 const express = require('express');
 const passport = require('passport');
 const { Advisor, Review, Profile, User } = require('../models/models');
-const { Qualification, AdvisorQualification, AdvisorService } = require('../models/models');
+const { Qualification, ServiceType, AdvisorQualification, AdvisorService } = require('../models/models');
 const router = express.Router();
 
 
@@ -213,7 +213,7 @@ router.put('/', passport.authenticate('jwt', { session: false }), async (req, re
 router.get('/', passport.authenticate('jwt', { session: false }), async (req, res) => {
     try {
         // Find the advisor using the user_id
-        const advisor = await Advisor.findOne({ where: { user_id: req.user.id } });
+        const advisor = await Advisor.findOne({ where: { user_id: req.user.id }, include: [{ model: User, attributes: ['email', 'created_at'] }] });
 
         if (!advisor) {
             return res.status(404).json({ message: 'Advisor not found' });
@@ -225,21 +225,22 @@ router.get('/', passport.authenticate('jwt', { session: false }), async (req, re
             include: [{ model: User, attributes: ['email'] }],
         });
 
+        const userProfile = await Profile.findOne({ where: { user_id: req.user.id } });
+
+
         // Fetch service types for the advisor
         const advisorServices = await AdvisorService.findAll({ where: { advisor_id: advisor.advisor_id } });
-        const serviceIds = advisorServices.map(as => as.service_id);
-        const serviceTypes = await ServiceType.findAll({ where: { service_id: serviceIds } });
 
         // Fetch qualifications for the advisor
         const advisorQualifications = await AdvisorQualification.findAll({ where: { advisor_id: advisor.advisor_id } });
-        const qualificationIds = advisorQualifications.map(aq => aq.qualificationId);
-        const qualifications = await Qualification.findAll({ where: { id: qualificationIds } });
+
 
         res.json({
             advisor,
             profileReviews,
-            serviceTypes,
-            qualifications,
+            serviceTypes: advisorServices.map(st => st.service_id),
+            qualifications: advisorQualifications.map(aq => aq.qualification_id),
+            userProfile,
         });
     } catch (error) {
         res.status(500).json({ error: error.message });

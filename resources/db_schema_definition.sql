@@ -52,7 +52,6 @@ CREATE TABLE myadvisor.profiles (
     last_name VARCHAR(100),
     phone_number VARCHAR(20),
     address TEXT,
-    preferences TEXT,
     visibility VARCHAR(50) NOT NULL 
 		CHECK (visibility IN ('public', 'private')) default 'private',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
