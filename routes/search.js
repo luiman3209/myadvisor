@@ -1,8 +1,8 @@
 const express = require('express');
-const { Op } = require('sequelize');
-const { Advisor, Profile, Review } = require('../models/models');
-const { ServiceType } = require('../models/models');
+
+const { Advisor, Profile, Review, AdvisorService } = require('../models/models');
 const router = express.Router();
+const { retrieveFreeWindows } = require('../utils/bookingUtils');
 /**
  * @swagger
  * /search/advisors:
@@ -103,29 +103,42 @@ router.get('/advisors', async (req, res) => {
         }
 
         const includeServices = service_id ? {
-            model: ServiceType,
-            through: {
-                where: { service_id },
-            },
+            model: AdvisorService,
+            attributes: ['service_id'],
         } : null;
 
         const offset = (page - 1) * limit;
 
         const { count, rows } = await Advisor.findAndCountAll({
             where: filters,
+            attributes: ['advisor_id',
+                'operating_country_code',
+                'contact_information',
+                'display_name',
+                'office_address',
+                'operating_city_code',
+                'img_url'
+            ],
             include: [
                 includeServices,
-                {
-                    model: Profile,
-                    attributes: ['first_name', 'last_name'],
-                    required: true,
-                },
             ].filter(Boolean),
             limit: parseInt(limit),
             offset: parseInt(offset),
         });
 
         const totalPages = Math.ceil(count / limit);
+
+
+        // Include free windows for each advisor
+        //for (const advisor of rows) {
+        //    const start = new Date();
+        //    start.setHours(0, 0, 0, 0);
+        //    const end = new Date();
+        //    end.setDate(start.getDate() + 7);
+        //    end.setHours(23, 59, 59, 999);
+        //    const freeWindows = await retrieveFreeWindows(advisor.advisor_id, start.toJSON, end.toJSON);
+        //    advisor.free_windows = freeWindows;
+        //}
 
         res.json({
             totalItems: count,
