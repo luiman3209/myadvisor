@@ -200,7 +200,7 @@ router.put('/', passport.authenticate('jwt', { session: false }), async (req, re
         await profile.save();
         return res.status(200).json({ message: 'Profile updated successfully', profile });
     } catch (e) {
-        console.log(e);
+
         res.status(400).json({ message: 'Error updating profile info', error: e })
     }
 

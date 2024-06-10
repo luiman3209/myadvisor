@@ -23,6 +23,15 @@ module.exports = (sequelize) => {
             },
             onDelete: 'CASCADE',
         },
+
+        service_id: {
+            type: DataTypes.INTEGER,
+            references: {
+                model: 'service_types',
+                key: 'service_id',
+            },
+            onDelete: 'CASCADE',
+        },
         start_time: {
             type: DataTypes.DATE,
             allowNull: false,

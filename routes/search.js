@@ -1,7 +1,7 @@
 const express = require('express');
-
-const { Advisor, Profile, Review, AdvisorService } = require('../models/models');
+const { Review, Advisor, Appointment, AdvisorService } = require('../models/models');
 const router = express.Router();
+const { Op } = require('sequelize');
 const { retrieveFreeWindows } = require('../utils/bookingUtils');
 /**
  * @swagger
@@ -91,6 +91,7 @@ const { retrieveFreeWindows } = require('../utils/bookingUtils');
  */
 router.get('/advisors', async (req, res) => {
     try {
+
         const { operating_country_code, service_id, page = 1, limit = 10 } = req.query;
 
         if (!operating_country_code && !service_id) {
@@ -117,7 +118,9 @@ router.get('/advisors', async (req, res) => {
                 'display_name',
                 'office_address',
                 'operating_city_code',
-                'img_url'
+                'img_url',
+                'start_shift_1',
+                'end_shift_1'
             ],
             include: [
                 includeServices,
@@ -128,28 +131,59 @@ router.get('/advisors', async (req, res) => {
 
         const totalPages = Math.ceil(count / limit);
 
+        let advisorDtos = [];
 
         // Include free windows for each advisor
-        //for (const advisor of rows) {
-        //    const start = new Date();
-        //    start.setHours(0, 0, 0, 0);
-        //    const end = new Date();
-        //    end.setDate(start.getDate() + 7);
-        //    end.setHours(23, 59, 59, 999);
-        //    const freeWindows = await retrieveFreeWindows(advisor.advisor_id, start.toJSON, end.toJSON);
-        //    advisor.free_windows = freeWindows;
-        //}
+        for (const advisor of rows) {
+            const start = new Date();
+            start.setHours(0, 0, 0, 0);
+            const end = new Date();
+            end.setDate(start.getDate() + 7);
+            end.setHours(23, 59, 59, 999);
+
+
+
+            const appointments = await Appointment.findAll({
+                where: {
+                    advisor_id: advisor.advisor_id,
+                    start_time: {
+                        [Op.between]: [start, end],
+                    },
+                },
+                order: [['start_time', 'ASC']],
+            });
+
+
+
+            const freeWindows = retrieveFreeWindows(advisor, appointments, start, end);
+
+            advisorDtos.push({
+                advisor_id: advisor.advisor_id,
+                advisor_services: advisor.advisor_services,
+                contact_information: advisor.contact_information,
+                display_name: advisor.display_name,
+                img_url: advisor.img_url,
+                office_address: advisor.office_address,
+                operating_city_code: advisor.operating_city_code,
+                operating_country_code: advisor.operating_country_code,
+                free_windows: freeWindows,
+            });
+        }
+
 
         res.json({
             totalItems: count,
             totalPages: totalPages,
             currentPage: parseInt(page),
-            advisors: rows
+            advisors: advisorDtos
         });
     } catch (error) {
         res.status(500).json({ error: error.message });
+
     }
 });
+
+
 
 
 module.exports = router;

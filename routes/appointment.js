@@ -1,5 +1,6 @@
 const express = require('express');
 const passport = require('passport');
+const { Op } = require('sequelize');
 
 const { Appointment, Advisor, User } = require('../models/models');
 const { retrieveFreeWindows } = require('../utils/bookingUtils');
@@ -70,7 +71,7 @@ const router = express.Router();
  */
 router.post('/book', passport.authenticate('jwt', { session: false }), async (req, res) => {
     try {
-        const { advisor_id, start_time, end_time } = req.body;
+        const { advisor_id, service_id, start_time, end_time } = req.body;
         const user_id = req.user.id;
 
         // Check if the advisor is available
@@ -88,6 +89,7 @@ router.post('/book', passport.authenticate('jwt', { session: false }), async (re
         const appointment = await Appointment.create({
             user_id,
             advisor_id,
+            service_id,
             start_time,
             end_time,
             status: 'scheduled',
@@ -342,33 +344,38 @@ router.put('/:appointmentId/status', passport.authenticate('jwt', { session: fal
  *         description: Internal server error
  */
 
-// Helper function to generate time slots
-function generateTimeSlots(start, end, interval = 30) {
-    const slots = [];
-    let current = new Date(start);
-
-    while (current < end) {
-        slots.push(current.toTimeString().substring(0, 5));
-        current = new Date(current.getTime() + interval * 60000); // Add interval minutes
-    }
-
-    return slots;
-}
-
-// Helper function to convert "HHmm" string to Date object
-function convertToTime(date, timeString) {
-    const hours = parseInt(timeString.substring(0, 2), 10);
-    const minutes = parseInt(timeString.substring(2, 4), 10);
-    return new Date(date.setHours(hours, minutes, 0, 0));
-}
-
 router.post('/free-windows/:advisorId', async (req, res) => {
 
     try {
         const advisorId = req.params.advisorId;
         const { startDate, endDate } = req.body;
 
-        const freeWindows = retrieveFreeWindows(advisorId, startDate, endDate);
+
+
+        const advisor = await Advisor.findByPk(advisorId);
+        if (!advisor) {
+            return res.status(404).send('Advisor not found');
+        }
+
+
+        const start = new Date(startDate);
+        start.setHours(0, 0, 0, 0);
+        const end = new Date(endDate);
+
+        end.setHours(23, 59, 59, 999);
+
+        const appointments = await Appointment.findAll({
+            where: {
+                advisor_id: advisor.advisor_id,
+                start_time: {
+                    [Op.between]: [start, end],
+                },
+            },
+            order: [['start_time', 'ASC']],
+        });
+
+
+        const freeWindows = retrieveFreeWindows(advisor, appointments, start, end);
 
         res.json(freeWindows);
     } catch (error) {

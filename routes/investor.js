@@ -67,7 +67,6 @@ const router = express.Router();
 
 router.put('/', passport.authenticate('jwt', { session: false }), async (req, res) => {
 
-    console.log(req.body);
     const { net_worth, income_range, geo_preferences, selected_service_ids } = req.body;
     const user_id = req.user.id;
 
@@ -112,7 +111,7 @@ router.put('/', passport.authenticate('jwt', { session: false }), async (req, re
         res.json({ message: 'Investor profile created or updated successfully', investor });
 
     } catch (error) {
-        console.log(error)
+
         res.status(500).json({ error: error.message });
     }
 });

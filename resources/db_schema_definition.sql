@@ -163,6 +163,7 @@ CREATE TABLE myadvisor.appointments (
     appointment_id INT PRIMARY KEY DEFAULT nextval('myadvisor.appointment_id_seq'),
     user_id INT REFERENCES myadvisor.user_configs(user_id) ON DELETE CASCADE,
     advisor_id INT REFERENCES myadvisor.advisors(advisor_id) ON DELETE CASCADE,
+    service_id INT REFERENCES myadvisor.service_types(service_id) ON DELETE CASCADE,
     start_time TIMESTAMP NOT NULL,
     end_time TIMESTAMP NOT NULL,
     is_reviewed BOOLEAN NOT NULL DEFAULT false,
