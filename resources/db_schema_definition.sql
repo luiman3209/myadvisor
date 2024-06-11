@@ -128,11 +128,22 @@ CREATE TABLE myadvisor.advisor_qualifications (
     FOREIGN KEY (qualification_id) REFERENCES myadvisor.qualifications(qualification_id) ON DELETE CASCADE
 );
 
-
--- [['retirement_planning', 'investment_management', 'tax_planning', 'estate_planning', 'insurance_planning', 
--- 'education_planning', 'debt_management', 'small_business_planning', 'divorce_planning', 'elder_care_planning', 
--- 'charitable_giving_and_philanthropy', 'behavioral_finance', 'wealth_management', 'risk_management', 'financial_education_and_coaching']]
-            
+--INSERT INTO myadvisor.service_types (service_type_name, service_type_code) VALUES ('Retirement Planning', 'retirement_planning');
+--INSERT INTO myadvisor.service_types (service_type_name, service_type_code) VALUES ('Investment Management', 'investment_management');
+--INSERT INTO myadvisor.service_types (service_type_name, service_type_code) VALUES ('Tax Planning', 'tax_planning');
+--INSERT INTO myadvisor.service_types (service_type_name, service_type_code) VALUES ('Estate Planning', 'estate_planning');
+--INSERT INTO myadvisor.service_types (service_type_name, service_type_code) VALUES ('Insurance Planning', 'insurance_planning');
+--INSERT INTO myadvisor.service_types (service_type_name, service_type_code) VALUES ('Education Planning', 'education_planning');
+--INSERT INTO myadvisor.service_types (service_type_name, service_type_code) VALUES ('Debt Management', 'debt_management');
+--INSERT INTO myadvisor.service_types (service_type_name, service_type_code) VALUES ('Small Business Planning', 'small_business_planning');
+--INSERT INTO myadvisor.service_types (service_type_name, service_type_code) VALUES ('Divorce Planning', 'divorce_planning');
+--INSERT INTO myadvisor.service_types (service_type_name, service_type_code) VALUES ('Elder Care Planning', 'elder_care_planning');
+--INSERT INTO myadvisor.service_types (service_type_name, service_type_code) VALUES ('Charitable Giving And Philanthropy', 'charitable_giving_and_philanthropy');
+--INSERT INTO myadvisor.service_types (service_type_name, service_type_code) VALUES ('Behavioral Finance', 'behavioral_finance');
+--INSERT INTO myadvisor.service_types (service_type_name, service_type_code) VALUES ('Wealth Management', 'wealth_management');
+--INSERT INTO myadvisor.service_types (service_type_name, service_type_code) VALUES ('Risk Management', 'risk_management');
+--INSERT INTO myadvisor.service_types (service_type_name, service_type_code) VALUES ('Financial Education And Coaching', 'financial_education_and_coaching');
+                  
 CREATE TABLE myadvisor.service_types (
     service_id SERIAL PRIMARY KEY,
     service_type_name TEXT unique not null,

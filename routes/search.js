@@ -1,7 +1,7 @@
 const express = require('express');
 const { Review, Advisor, Appointment, AdvisorService } = require('../models/models');
 const router = express.Router();
-const { Op } = require('sequelize');
+const { Op, where } = require('sequelize');
 const { retrieveFreeWindows } = require('../utils/bookingUtils');
 /**
  * @swagger
@@ -105,7 +105,9 @@ router.get('/advisors', async (req, res) => {
 
         const includeServices = service_id ? {
             model: AdvisorService,
+            where: { service_id: service_id },
             attributes: ['service_id'],
+            required: true,
         } : null;
 
         const offset = (page - 1) * limit;
@@ -135,13 +137,13 @@ router.get('/advisors', async (req, res) => {
 
         // Include free windows for each advisor
         for (const advisor of rows) {
+
+            // Calculate available slots for the next week
             const start = new Date();
             start.setHours(0, 0, 0, 0);
             const end = new Date();
             end.setDate(start.getDate() + 7);
             end.setHours(23, 59, 59, 999);
-
-
 
             const appointments = await Appointment.findAll({
                 where: {
@@ -153,9 +155,23 @@ router.get('/advisors', async (req, res) => {
                 order: [['start_time', 'ASC']],
             });
 
-
-
             const freeWindows = retrieveFreeWindows(advisor, appointments, start, end);
+
+
+            // Calculate average rating
+            const reviews = await Review.findAll({
+                where: {
+                    advisor_id: advisor.advisor_id,
+                },
+                attributes: ['rating'],
+            });
+
+            let totalRating = 0;
+            for (const review of reviews) {
+                totalRating += review.rating;
+            }
+
+            const averageRating = reviews.length > 0 ? totalRating / reviews.length : 0;
 
             advisorDtos.push({
                 advisor_id: advisor.advisor_id,
@@ -167,9 +183,10 @@ router.get('/advisors', async (req, res) => {
                 operating_city_code: advisor.operating_city_code,
                 operating_country_code: advisor.operating_country_code,
                 free_windows: freeWindows,
+                average_rating: averageRating,
+                review_count: reviews.length,
             });
         }
-
 
         res.json({
             totalItems: count,
@@ -179,7 +196,7 @@ router.get('/advisors', async (req, res) => {
         });
     } catch (error) {
         res.status(500).json({ error: error.message });
-
+        console.log(error);
     }
 });
 

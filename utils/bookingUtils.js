@@ -1,6 +1,6 @@
 
 
-const minFreeWindowDuration = 30; // Minimum free window duration in minutes
+const minFreeWindowDuration = 60; // Minimum free window duration in minutes
 
 
 // Helper function to generate time slots
