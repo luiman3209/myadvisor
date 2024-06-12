@@ -388,14 +388,7 @@ router.get('/:advisor_id', async (req, res) => {
         const { advisor_id } = req.params;
 
         // Find the advisor by ID, including the Profile
-        const advisor = await Advisor.findByPk(advisor_id, {
-            include: [
-                {
-                    model: Profile,
-                    attributes: ['first_name', 'last_name'],
-                },
-            ],
-        });
+        const advisor = await Advisor.findByPk(advisor_id);
 
         if (!advisor) {
             return res.status(404).json({ message: 'Advisor not found' });
@@ -424,15 +417,35 @@ router.get('/:advisor_id', async (req, res) => {
         const qualifications = await Qualification.findAll({ where: { qualification_id: qualificationIds } });
 
         res.json({
-            advisor: {
-                ...advisor.get(),
-                first_name: advisor.profile.first_name,
-                last_name: advisor.profile.last_name,
-            },
+            advisor: advisor,
             profileReviews,
             serviceTypes,
             qualifications,
             offices: [advisor.office_address],
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.get('/book-info/:advisor_id', async (req, res) => {
+    try {
+        const { advisor_id } = req.params;
+
+        // Find the advisor by ID, including the Profile
+        const advisor = await Advisor.findByPk(advisor_id);
+
+        if (!advisor) {
+            return res.status(404).json({ message: 'Advisor not found' });
+        }
+
+        // Update profile views
+        advisor.profile_views += 1;
+        await advisor.save();
+
+        res.json({
+            advisor,
+
         });
     } catch (error) {
         res.status(500).json({ error: error.message });
