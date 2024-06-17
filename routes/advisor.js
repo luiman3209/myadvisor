@@ -400,11 +400,26 @@ router.get('/:advisor_id', async (req, res) => {
 
         // Fetch reviews for the advisor
         const profileReviews = await Review.findAll({
+            attributes: ['review', 'rating', 'created_at'],
             where: { advisor_id },
-            include: [{ model: User, attributes: ['email'] }],
-            order: [['created_at', 'DESC']],
-            limit: 10,
+            include: [
+                {
+                    model: User, attributes: [],
+                    include: [{ model: Profile, attributes: ['first_name'] }],
+                    required: true
+                },],
+            order: [['rating', 'DESC'], ['created_at', 'DESC']],
+            limit: parseInt(6),
         });
+
+        let totalRating = 0;
+        for (const review of profileReviews) {
+            totalRating += review.rating;
+        }
+
+        const averageRating = profileReviews.length > 0 ? totalRating / profileReviews.length : 0;
+
+
 
         // Fetch service types for the advisor
         const advisorServices = await AdvisorService.findAll({ where: { advisor_id } });
@@ -421,6 +436,8 @@ router.get('/:advisor_id', async (req, res) => {
             profileReviews,
             serviceTypes,
             qualifications,
+            average_rating: averageRating,
+            review_count: profileReviews.length,
             offices: [advisor.office_address],
         });
     } catch (error) {
@@ -443,10 +460,8 @@ router.get('/book-info/:advisor_id', async (req, res) => {
         advisor.profile_views += 1;
         await advisor.save();
 
-        res.json({
-            advisor,
-
-        });
+        res.json(
+            advisor);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

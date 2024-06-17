@@ -71,7 +71,7 @@ router.get('/latest-reviews', async (req, res) => {
                 { model: Advisor, attributes: ['display_name', 'img_url'], required: true },
                 {
                     model: User, attributes: [],
-                    include: [{ model: Profile, atttributes: ['first_name'] }],
+                    include: [{ model: Profile, attributes: ['first_name'] }],
                     required: true
                 },],
             order: [['rating', 'DESC'], ['created_at', 'DESC']],

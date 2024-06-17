@@ -92,6 +92,7 @@ router.post('/book', passport.authenticate('jwt', { session: false }), async (re
             service_id,
             start_time,
             end_time,
+            is_reviewed: false,
             status: 'scheduled',
         });
 
