@@ -1,5 +1,7 @@
 const express = require('express');
+const passport = require('passport');
 const { Op } = require('sequelize');
+
 const { Review, Advisor, User, Profile } = require('../models/models');
 const router = express.Router();
 
@@ -84,5 +86,70 @@ router.get('/latest-reviews', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+
+
+router.post('/advisor', passport.authenticate('jwt', { session: false }), async (req, res) => {
+    try {
+        const { sort_by, sort_type, min_date, min_rating, max_rating, max_date, has_text, page, limit } = req.body;
+        const advisor = await Advisor.findOne({ where: { user_id: req.user.id } });
+        if (!advisor) {
+            return res.status(404).json({ message: 'Advisor not found' });
+        }
+
+
+        if (!page || page < 1) page = 1;
+        if (!limit || limit < 1 || limit > 50) limit = 10;
+
+        const offset = (page - 1) * limit;
+
+        let whereClause = { advisor_id: advisor.advisor_id };
+
+        if (min_date) whereClause.created_at = { [Op.gte]: min_date };
+        if (max_date) whereClause.created_at = { [Op.lte]: max_date };
+
+        if (min_rating) whereClause.rating = { [Op.gte]: min_rating };
+        if (max_rating) whereClause.rating = { [Op.lte]: max_rating };
+
+        if (has_text && has_text === true) whereClause.review = { [Op.not]: '' };
+        if (has_text && has_text === false) whereClause.review = '';
+
+        let orderClause = [];
+        if (sort_by && sort_by !== 'rating' && sort_by !== 'created_at') {
+            return res.status(400).json({ message: 'Invalid sort_by parameter' });
+        }
+
+
+        if (sort_type && sort_type !== 'asc' && sort_type !== 'desc') {
+            return res.status(400).json({ message: 'Invalid sort_type parameter' });
+        }
+
+
+        let sortClause = [];
+        if (sort_by) { sortClause.push(sort_by) } else { sortClause.push('created_at'); }
+        if (sort_type) { sortClause.push(sort_type) } else { sortClause.push('DESC'); }
+
+        orderClause.push(sortClause);
+
+        const { count, rows } = await Review.findAndCountAll({
+            where: whereClause,
+            order: orderClause,
+            attributes: ['review_id', 'user_id', 'appointment_id', 'rating', 'review', 'created_at'],
+            limit,
+            offset
+        });
+
+        const totalPages = Math.ceil(count / limit);
+
+        res.json({
+            totalItems: count,
+            totalPages: totalPages,
+            currentPage: page,
+            appointments: rows
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 
 module.exports = router;

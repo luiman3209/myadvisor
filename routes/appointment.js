@@ -183,19 +183,35 @@ router.post('/book', passport.authenticate('jwt', { session: false }), async (re
  *                         type: string
  *                         example: 'scheduled'
  */
-router.get('/advisor', passport.authenticate('jwt', { session: false }), async (req, res) => {
+router.post('/advisor', passport.authenticate('jwt', { session: false }), async (req, res) => {
     try {
+        const { sort_type, min_date, max_date, service_id, page, limit } = req.body;
         const advisor = await Advisor.findOne({ where: { user_id: req.user.id } });
         if (!advisor) {
-            return res.status(404).json({ message: 'Advisor profile not found' });
+            return res.status(404).json({ message: 'Advisor not found' });
         }
 
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 10;
+
+        if (!page || page < 1) page = 1;
+        if (!limit || limit < 1 || limit > 50) limit = 10;
+
         const offset = (page - 1) * limit;
 
+        let whereClause = { advisor_id: advisor.advisor_id };
+        if (service_id) whereClause.service_id = service_id;
+        if (min_date) whereClause.start_time = { [Op.gte]: min_date };
+        if (max_date) whereClause.start_time = { [Op.lte]: max_date };
+
+        let orderClause;
+        if (sort_type && (sort_type === 'asc' || sort_type === 'desc')) { orderClause = [['start_time', sort_type]]; }
+        else {
+            orderClause = [['start_time', 'DESC']];
+        }
+
         const { count, rows } = await Appointment.findAndCountAll({
-            where: { advisor_id: advisor.advisor_id },
+            where: whereClause,
+            order: orderClause,
+            attributes: ['appointment_id', 'user_id', 'service_id', 'start_time', 'end_time', 'is_reviewed', 'status'],
             limit,
             offset
         });
