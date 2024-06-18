@@ -423,4 +423,32 @@ router.post('/free-windows/:advisorId', async (req, res) => {
 });
 
 
+router.delete('/:appointmentId', async (req, res) => {
+
+    try {
+        const { appointmentId } = req.query.params;
+
+        const user_id = req.user.id;
+
+        const appointment = await Appointment.findByPk(appointmentId, { include: { model: Advisor, include: { User } } });
+
+        if (!appointment) {
+            return res.status(404).json({ message: 'Appointment not found' });
+        }
+
+        if (appointment.user_id !== user_id && appointment.advisor.user_config.user_id !== user_id) {
+            return res.status(403).json({ message: 'You are not authorized to delete this appointment' });
+        }
+
+        await appointment.destroy();
+
+        res.json({ message: 'Appointment deleted successfully' });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Internal Server Error');
+    }
+});
+
+
 module.exports = router;
