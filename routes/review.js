@@ -88,12 +88,28 @@ router.get('/latest-reviews', async (req, res) => {
 });
 
 
-router.post('/advisor', passport.authenticate('jwt', { session: false }), async (req, res) => {
+router.post('/filter', passport.authenticate('jwt', { session: false }), async (req, res) => {
     try {
         const { sort_by, sort_type, min_date, min_rating, max_rating, max_date, has_text, page, limit } = req.body;
-        const advisor = await Advisor.findOne({ where: { user_id: req.user.id } });
-        if (!advisor) {
-            return res.status(404).json({ message: 'Advisor not found' });
+
+
+        const user = User.findByPk(req.user.id);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        let whereClause = {};
+
+        if (user.role === 'advisor') {
+            const advisor = await Advisor.findOne({ where: { user_id: req.user.id } });
+            if (!advisor) {
+                return res.status(404).json({ message: 'Advisor not found' });
+            }
+
+            whereClause.advisor_id = advisor.advisor_id;
+
+        } else {
+            whereClause.user_id = req.user.id;
         }
 
 
@@ -102,7 +118,6 @@ router.post('/advisor', passport.authenticate('jwt', { session: false }), async 
 
         const offset = (page - 1) * limit;
 
-        let whereClause = { advisor_id: advisor.advisor_id };
 
         if (min_date) whereClause.created_at = { [Op.gte]: min_date };
         if (max_date) whereClause.created_at = { [Op.lte]: max_date };
@@ -133,7 +148,13 @@ router.post('/advisor', passport.authenticate('jwt', { session: false }), async 
         const { count, rows } = await Review.findAndCountAll({
             where: whereClause,
             order: orderClause,
-            attributes: ['review_id', 'user_id', 'appointment_id', 'rating', 'review', 'created_at'],
+            attributes: ['review_id', 'user_id', 'advisor_id', 'appointment_id', 'rating', 'review', 'created_at'],
+            include: {
+                model: User, attributes: ['user_id',], include: {
+                    model: Profile, attributes: ['first_name'],
+                    required: true
+                }
+            },
             limit,
             offset
         });
@@ -144,7 +165,7 @@ router.post('/advisor', passport.authenticate('jwt', { session: false }), async 
             totalItems: count,
             totalPages: totalPages,
             currentPage: page,
-            appointments: rows
+            reviews: rows
         });
     } catch (error) {
         res.status(500).json({ error: error.message });

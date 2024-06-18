@@ -2,7 +2,7 @@ const express = require('express');
 const passport = require('passport');
 const { Op } = require('sequelize');
 
-const { Appointment, Advisor, User } = require('../models/models');
+const { Appointment, Advisor, User, Profile } = require('../models/models');
 const { retrieveFreeWindows } = require('../utils/bookingUtils');
 
 const router = express.Router();
@@ -183,12 +183,28 @@ router.post('/book', passport.authenticate('jwt', { session: false }), async (re
  *                         type: string
  *                         example: 'scheduled'
  */
-router.post('/advisor', passport.authenticate('jwt', { session: false }), async (req, res) => {
+router.post('/filter', passport.authenticate('jwt', { session: false }), async (req, res) => {
     try {
         const { sort_type, min_date, max_date, service_id, page, limit } = req.body;
-        const advisor = await Advisor.findOne({ where: { user_id: req.user.id } });
-        if (!advisor) {
-            return res.status(404).json({ message: 'Advisor not found' });
+
+
+        const user = User.findByPk(req.user.id);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        let whereClause = {};
+
+        if (user.role === 'advisor') {
+            const advisor = await Advisor.findOne({ where: { user_id: req.user.id } });
+            if (!advisor) {
+                return res.status(404).json({ message: 'Advisor not found' });
+            }
+
+            whereClause.advisor_id = advisor.advisor_id;
+
+        } else {
+            whereClause.user_id = req.user.id;
         }
 
 
@@ -197,7 +213,6 @@ router.post('/advisor', passport.authenticate('jwt', { session: false }), async 
 
         const offset = (page - 1) * limit;
 
-        let whereClause = { advisor_id: advisor.advisor_id };
         if (service_id) whereClause.service_id = service_id;
         if (min_date) whereClause.start_time = { [Op.gte]: min_date };
         if (max_date) whereClause.start_time = { [Op.lte]: max_date };
@@ -212,6 +227,12 @@ router.post('/advisor', passport.authenticate('jwt', { session: false }), async 
             where: whereClause,
             order: orderClause,
             attributes: ['appointment_id', 'user_id', 'service_id', 'start_time', 'end_time', 'is_reviewed', 'status'],
+            include: {
+                model: User, attributes: ['user_id',], include: {
+                    model: Profile, attributes: ['first_name'],
+                    required: true
+                }
+            },
             limit,
             offset
         });
