@@ -253,7 +253,7 @@ router.get('/:investorId', passport.authenticate('jwt', { session: false }), asy
     try {
         res.status(400).json({ message: 'DISABLED' });
 
-        const investor = await Investor.findByPk(req.params.investorId, {
+        const investor = await Investor.findByPk(parseInt(req.params.investorId), {
             include: [{ model: User, attributes: ['email', 'created_at'] }],
         });
 

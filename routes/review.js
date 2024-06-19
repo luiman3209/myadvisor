@@ -93,7 +93,7 @@ router.post('/filter', passport.authenticate('jwt', { session: false }), async (
         const { sort_by, sort_type, min_date, min_rating, max_rating, max_date, has_text, page, limit } = req.body;
 
 
-        const user = User.findByPk(req.user.id);
+        const user = await User.findByPk(req.user.id);
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }

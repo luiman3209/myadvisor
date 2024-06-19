@@ -1,6 +1,6 @@
 const express = require('express');
 const passport = require('passport');
-const { Advisor, Review, Profile, User } = require('../models/models');
+const { Advisor, Review, Profile, User, Appointment } = require('../models/models');
 const { Qualification, ServiceType, AdvisorQualification, AdvisorService } = require('../models/models');
 const router = express.Router();
 
@@ -528,20 +528,20 @@ router.post('/review', passport.authenticate('jwt', { session: false }), async (
         const { rating, review, appointmentId } = req.body;
         const userId = req.user.id;
 
-        if (!appointmentId || !rating || !review) {
-            return res.status(400).json({ message: 'Rating and review are required' });
+        if (!appointmentId || !rating) {
+            return res.status(400).json({ message: 'Rating is required' });
         }
 
         if (rating < 1 || rating > 5) {
             return res.status(400).json({ message: 'Rating must be between 1 and 5' });
         }
 
-        if (review.length < 10 || review.length > 500) {
-            return res.status(400).json({ message: 'Review must me between 10 and 500 characters long' });
+        if (review.length > 500) {
+            return res.status(400).json({ message: 'Review must be 500 characters long max' });
         }
 
         // Check if the appointment exists and is not reviewed
-        const appointment = await Appointment.findOne({ where: { appointment_id: appointmentId } });
+        const appointment = await Appointment.findByPk(appointmentId);
 
         if (!appointment) {
             return res.status(400).json({ message: 'Invalid appointment ID' });
@@ -549,6 +549,10 @@ router.post('/review', passport.authenticate('jwt', { session: false }), async (
 
         if (appointment.is_reviewed) {
             return res.status(400).json({ message: 'Appointment already reviewed' });
+        }
+
+        if (appointment.user_id !== userId) {
+            return res.status(400).json({ message: 'You are not authorized to review this appointment' });
         }
 
         // Set appointment reviewed
@@ -563,7 +567,7 @@ router.post('/review', passport.authenticate('jwt', { session: false }), async (
             review,
         });
 
-        res.json({ message: 'Review added successfully', review: newReview });
+        res.json(newReview);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

@@ -188,7 +188,7 @@ router.post('/filter', passport.authenticate('jwt', { session: false }), async (
         const { sort_type, min_date, max_date, service_id, page, limit } = req.body;
 
 
-        const user = User.findByPk(req.user.id);
+        const user = await User.findByPk(req.user.id);
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
@@ -227,12 +227,16 @@ router.post('/filter', passport.authenticate('jwt', { session: false }), async (
             where: whereClause,
             order: orderClause,
             attributes: ['appointment_id', 'user_id', 'service_id', 'start_time', 'end_time', 'is_reviewed', 'status'],
-            include: {
+            include: [{
                 model: User, attributes: ['user_id',], include: {
                     model: Profile, attributes: ['first_name'],
                     required: true
-                }
+                }, required: true
             },
+
+            {
+                model: Advisor, attributes: ['advisor_id', 'display_name'],
+            }],
             limit,
             offset
         });
@@ -423,14 +427,14 @@ router.post('/free-windows/:advisorId', async (req, res) => {
 });
 
 
-router.delete('/:appointmentId', async (req, res) => {
+router.delete('/:appointmentId', passport.authenticate('jwt', { session: false }), async (req, res) => {
 
     try {
-        const { appointmentId } = req.query.params;
+        const appointmentId = parseInt(req.params.appointmentId);
 
         const user_id = req.user.id;
 
-        const appointment = await Appointment.findByPk(appointmentId, { include: { model: Advisor, include: { User } } });
+        const appointment = await Appointment.findByPk(appointmentId, { include: { model: Advisor, include: { model: User } } });
 
         if (!appointment) {
             return res.status(404).json({ message: 'Appointment not found' });

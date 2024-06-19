@@ -110,12 +110,27 @@ if (env === 'test' || (env === 'development' && !config.use_env_variable)) {
             role: 'advisor',
         });
 
+        const user2 = await User.create({
+            user_id: 2,
+            email: 'a@a',
+            password_hash: 'aaaaaa',
+            role: 'investor',
+        });
+
         await Profile.create({
             profile_id: 1,
             user_id: user.user_id,
             first_name: 'John',
             last_name: 'Doe',
             phone_number: '1234567890',
+        });
+
+        await Profile.create({
+            profile_id: 2,
+            user_id: user2.user_id,
+            first_name: 'John',
+            last_name: 'Doe',
+            phone_number: '1234567891',
         });
 
         const advisor = await Advisor.create({
@@ -128,6 +143,13 @@ if (env === 'test' || (env === 'development' && !config.use_env_variable)) {
             start_shift_1: '0800',
             end_shift_1: '1600',
             contact_information: 'ciao',
+        });
+
+        const investor = await Investor.create({
+            user_id: user2.user_id,
+            net_worth: '100000-199999',
+            income_range: '75000-99999',
+            geo_preferences: 'North America',
         });
 
 
