@@ -1,4 +1,5 @@
 const express = require('express');
+const cron = require('node-cron');
 const passport = require('passport');
 const bodyParser = require('body-parser');
 const authRoutes = require('./routes/auth');
@@ -29,6 +30,16 @@ if (process.env.NODE_ENV === 'development') {
     origin: 'http://localhost:3000',
   }));
 }
+
+const updateCompletedAppointments = require('./utils/updateAppointmentBatch');
+
+const cronExpr = process.env.NODE_ENV === 'development' ? '*/2 * * * *' : '*/30 * * * *';
+
+// Schedule the task to run every 30 minutes
+cron.schedule(cronExpr, () => {
+  updateCompletedAppointments();
+});
+
 
 app.use(helmet());
 app.use(bodyParser.json());

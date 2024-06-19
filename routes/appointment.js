@@ -325,7 +325,7 @@ router.put('/:appointmentId/status', passport.authenticate('jwt', { session: fal
             return res.status(404).json({ message: 'Appointment not found' });
         }
 
-        if (appointment.advisor_id !== req.user.id) {
+        if (appointment.user_id !== req.user.id) {
             return res.status(403).json({ message: 'You are not authorized to update this appointment' });
         }
 
