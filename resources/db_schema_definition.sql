@@ -1,4 +1,14 @@
 
+CREATE OR REPLACE PROCEDURE update_completed_appointments()
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  UPDATE appointments
+  SET status = 'completed'
+  WHERE end_time < NOW() AND status = 'scheduled';
+END;
+$$;
+
 CREATE SEQUENCE myadvisor.appointment_id_seq
 START WITH 1
 INCREMENT BY 1
@@ -188,9 +198,9 @@ CREATE TABLE myadvisor.appointments (
 -- Reviews table
 CREATE TABLE myadvisor.reviews (
     review_id INT PRIMARY KEY DEFAULT nextval('review_id_seq'),
-    user_id INT REFERENCES myadvisor.user_configs(user_id) ON DELETE NO ACTION,
+    user_id INT REFERENCES myadvisor.user_configs(user_id) ON DELETE SET NULL,
     advisor_id INT REFERENCES myadvisor.advisors(advisor_id) ON DELETE CASCADE,
-    appointment_id INT REFERENCES myadvisor.appointments(appointment_id) ON DELETE NO ACTION,
+    appointment_id INT REFERENCES myadvisor.appointments(appointment_id) ON DELETE SET NULL,
     rating INT CHECK (rating BETWEEN 1 AND 5),
     review TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

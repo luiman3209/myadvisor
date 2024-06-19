@@ -70,17 +70,17 @@ router.get('/latest-reviews', async (req, res) => {
 
         const reviews = await Review.findAll({
             include: [
-                { model: Advisor, attributes: ['display_name', 'img_url'], required: true },
+                { model: Advisor, attributes: ['advisor_id', 'display_name', 'img_url'], required: true },
                 {
-                    model: User, attributes: [],
-                    include: [{ model: Profile, attributes: ['first_name'] }],
+                    model: User, attributes: ['user_id'],
+                    include: [{ model: Profile, attributes: ['first_name'], required: true }],
                     required: true
                 },],
             order: [['rating', 'DESC'], ['created_at', 'DESC']],
             limit: parseInt(limit),
         });
 
-        res.json({ reviews });
+        res.json(reviews);
     } catch (error) {
 
         res.status(500).json({ error: error.message });

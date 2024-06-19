@@ -13,7 +13,7 @@ module.exports = (sequelize) => {
                 model: 'user_configs',
                 key: 'user_id',
             },
-            onDelete: 'NO ACTION',
+            onDelete: 'SET NULL',
         },
         advisor_id: {
             type: DataTypes.INTEGER,
@@ -29,7 +29,7 @@ module.exports = (sequelize) => {
                 model: 'appointments',
                 key: 'appointment_id',
             },
-            onDelete: 'NO ACTION',
+            onDelete: 'SET NULL',
         },
         rating: {
             type: DataTypes.INTEGER,
