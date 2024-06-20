@@ -169,6 +169,10 @@ router.put('/', passport.authenticate('jwt', { session: false }), async (req, re
         return res.status(400).json({ message: 'Please provide first name, last name, phone number and address for first registration' });
     }
 
+    // Make only first letter upper case for first and last name
+    const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+
+
     let profile = await Profile.findOne({ where: { user_id: req.user.id } });
     if (!profile) {
 
@@ -176,8 +180,8 @@ router.put('/', passport.authenticate('jwt', { session: false }), async (req, re
             // Create new profile if not found
             profile = await Profile.create({
                 user_id: req.user.id,
-                first_name,
-                last_name,
+                first_name: capitalize(first_name),
+                last_name: capitalize(last_name),
                 phone_number,
                 address,
                 visibility: 'private'

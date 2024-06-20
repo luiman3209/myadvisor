@@ -98,22 +98,36 @@ router.get('/advisors', async (req, res) => {
             return res.status(400).json({ message: 'At least one of operating_country_code or service_id must be provided' });
         }
 
-        const filters = {};
-        if (operating_country_code) {
-            filters.operating_country_code = operating_country_code;
-        }
+        const whereClause = {};
 
-        const includeServices = service_id ? {
-            model: AdvisorService,
-            where: { service_id: service_id },
-            attributes: ['service_id'],
-            required: true,
-        } : null;
+        if (service_id) {
+
+            const advisor_ses = await AdvisorService.findAll({
+                attributes: ['advisor_id'],
+                where: {
+                    service_id: service_id
+                }
+            });
+
+            const advisor_ids = advisor_ses.map(advisor_se => advisor_se.advisor_id);
+
+            whereClause.advisor_id = {
+                [Op.in]: advisor_ids
+            };
+
+            if (operating_country_code) {
+                whereClause.operating_country_code = operating_country_code;
+            }
+
+
+        } else if (operating_country_code) {
+            whereClause.operating_country_code = operating_country_code;
+        }
 
         const offset = (page - 1) * limit;
 
         const { count, rows } = await Advisor.findAndCountAll({
-            where: filters,
+            where: whereClause,
             attributes: ['advisor_id',
                 'operating_country_code',
                 'contact_information',
@@ -124,9 +138,6 @@ router.get('/advisors', async (req, res) => {
                 'start_shift_1',
                 'end_shift_1'
             ],
-            include: [
-                includeServices,
-            ].filter(Boolean),
             limit: parseInt(limit),
             offset: parseInt(offset),
         });
@@ -173,9 +184,19 @@ router.get('/advisors', async (req, res) => {
 
             const averageRating = reviews.length > 0 ? totalRating / reviews.length : 0;
 
+            // Load service ids
+            const advisor_services = await AdvisorService.findAll({
+                where: {
+                    advisor_id: advisor.advisor_id
+                },
+                attributes: ['service_id']
+            });
+
+            const advisor_service_ids = advisor_services.map(service => service.service_id);
+
             advisorDtos.push({
                 advisor_id: advisor.advisor_id,
-                advisor_services: advisor.advisor_services,
+                advisor_services: advisor_service_ids,
                 contact_information: advisor.contact_information,
                 display_name: advisor.display_name,
                 img_url: advisor.img_url,
