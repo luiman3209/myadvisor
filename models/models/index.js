@@ -129,7 +129,7 @@ if (env === 'test' || (env === 'development' && !config.use_env_variable)) {
         const advisor = await Advisor.create({
 
             user_id: user.user_id,
-            operating_country_code: 'US',
+            operating_country_code: 'AZ',
             operating_city_code: '12345',
             office_address: 'Via stupenda, 20',
             display_name: 'Pino Ciao',
