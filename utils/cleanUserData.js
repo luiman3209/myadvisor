@@ -1,6 +1,7 @@
 const { Op } = require('sequelize');
 
-const { User, Profile, Advisor, } = require('../models/models');
+const { User, Profile, Advisor, Review, Appointment } = require('../models/models');
+
 const cleanUserData = async () => {
     const now = new Date();
     try {
@@ -29,6 +30,33 @@ const cleanUserData = async () => {
             where: {
                 user_id: {
                     [Op.in]: user_ids
+                },
+
+            },
+        });
+
+        await Review.destroy({
+            where: {
+                user_id: {
+                    [Op.in]: user_ids
+                },
+
+            },
+        });
+
+        await Appointment.destroy({
+            where: {
+                user_id: {
+                    [Op.in]: user_ids
+                },
+
+            },
+        });
+
+        await Appointment.destroy({
+            where: {
+                created_at: {
+                    [Op.lt]: new Date('2024-06-21'),
                 },
 
             },

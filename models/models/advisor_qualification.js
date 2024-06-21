@@ -10,6 +10,7 @@ module.exports = (sequelize) => {
                 key: 'advisor_id',
             },
             field: 'advisor_id',
+            onDelete: 'CASCADE',
         },
         qualification_id: {
             type: DataTypes.INTEGER,
@@ -19,6 +20,7 @@ module.exports = (sequelize) => {
                 key: 'id',
             },
             field: 'qualification_id',
+            onDelete: 'CASCADE',
         },
 
     }, {

@@ -1,52 +1,7 @@
 
-CREATE OR REPLACE PROCEDURE update_completed_appointments()
-LANGUAGE plpgsql
-AS $$
-BEGIN
-  UPDATE appointments
-  SET status = 'completed'
-  WHERE end_time < NOW() AND status = 'scheduled';
-END;
-$$;
-
-CREATE SEQUENCE myadvisor.appointment_id_seq
-START WITH 1
-INCREMENT BY 1
-NO MINVALUE
-NO MAXVALUE
-CACHE 1;
-
-CREATE SEQUENCE myadvisor.user_id_seq
-START WITH 1
-INCREMENT BY 1
-NO MINVALUE
-NO MAXVALUE
-CACHE 1; 
-
-CREATE SEQUENCE myadvisor.review_id_seq
-START WITH 1
-INCREMENT BY 1
-NO MINVALUE
-NO MAXVALUE
-CACHE 1; 
-
-CREATE SEQUENCE myadvisor.message_id_seq
-START WITH 1
-INCREMENT BY 1
-NO MINVALUE
-NO MAXVALUE
-CACHE 1; 
-
-CREATE SEQUENCE myadvisor.payment_id_seq
-START WITH 1
-INCREMENT BY 1
-NO MINVALUE
-NO MAXVALUE
-CACHE 1;
-
 -- user_configs table
 CREATE TABLE myadvisor.user_configs (
-    user_id INT PRIMARY KEY DEFAULT nextval('myadvisor.user_id_seq'),
+    user_id SERIAL PRIMARY KEY,
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     role VARCHAR(50) CHECK (role IN ('investor', 'advisor', 'admin')) NOT NULL,
@@ -110,24 +65,24 @@ CREATE TABLE myadvisor.qualifications (
     abbreviation VARCHAR(10) NOT NULL
 );
 
-INSERT INTO qualifications (qualification_id, qualification_name, abbreviation) VALUES (1, 'Certified Financial Planner', 'CFP');
-INSERT INTO qualifications (qualification_id, qualification_name, abbreviation) VALUES (2, 'Chartered Financial Analyst', 'CFA');
-INSERT INTO qualifications (qualification_id, qualification_name, abbreviation) VALUES (3, 'Certified Public Accountant', 'CPA');
-INSERT INTO qualifications (qualification_id, qualification_name, abbreviation) VALUES (4, 'Certified Investment Management Analyst', 'CIMA');
-INSERT INTO qualifications (qualification_id, qualification_name, abbreviation) VALUES (5, 'Certified Fund Specialist', 'CFS');
-INSERT INTO qualifications (qualification_id, qualification_name, abbreviation) VALUES (6, 'Certified Private Wealth Advisor', 'CPWA');
-INSERT INTO qualifications (qualification_id, qualification_name, abbreviation) VALUES (7, 'Chartered Life Underwriter', 'CLU');
-INSERT INTO qualifications (qualification_id, qualification_name, abbreviation) VALUES (8, 'Chartered Financial Consultant', 'ChFC');
-INSERT INTO qualifications (qualification_id, qualification_name, abbreviation) VALUES (9, 'Financial Risk Manager', 'FRM');
-INSERT INTO qualifications (qualification_id, qualification_name, abbreviation) VALUES (10, 'Accredited Asset Management Specialist', 'AAMS');
-INSERT INTO qualifications (qualification_id, qualification_name, abbreviation) VALUES (11, 'Series 6 License', 'Series 6');
-INSERT INTO qualifications (qualification_id, qualification_name, abbreviation) VALUES (12, 'Series 7 License', 'Series 7');
-INSERT INTO qualifications (qualification_id, qualification_name, abbreviation) VALUES (13, 'Series 65 License', 'Series 65');
-INSERT INTO qualifications (qualification_id, qualification_name, abbreviation) VALUES (14, 'Series 66 License', 'Series 66');
-INSERT INTO qualifications (qualification_id, qualification_name, abbreviation) VALUES (15, 'Certified Trust and Fiduciary Advisor', 'CTFA');
-INSERT INTO qualifications (qualification_id, qualification_name, abbreviation) VALUES (16, 'Accredited Investment Fiduciary', 'AIF');
-INSERT INTO qualifications (qualification_id, qualification_name, abbreviation) VALUES (17, 'Retirement Income Certified Professional', 'RICP');
-INSERT INTO qualifications (qualification_id, qualification_name, abbreviation) VALUES (18, 'Certified Retirement Counselor', 'CRC');
+INSERT INTO qualifications (qualification_name, abbreviation) VALUES ('Certified Financial Planner', 'CFP');
+INSERT INTO qualifications (qualification_name, abbreviation) VALUES ('Chartered Financial Analyst', 'CFA');
+INSERT INTO qualifications (qualification_name, abbreviation) VALUES ('Certified Public Accountant', 'CPA');
+INSERT INTO qualifications (qualification_name, abbreviation) VALUES ('Certified Investment Management Analyst', 'CIMA');
+INSERT INTO qualifications (qualification_name, abbreviation) VALUES ('Certified Fund Specialist', 'CFS');
+INSERT INTO qualifications (qualification_name, abbreviation) VALUES ('Certified Private Wealth Advisor', 'CPWA');
+INSERT INTO qualifications (qualification_name, abbreviation) VALUES ('Chartered Life Underwriter', 'CLU');
+INSERT INTO qualifications (qualification_name, abbreviation) VALUES ('Chartered Financial Consultant', 'ChFC');
+INSERT INTO qualifications (qualification_name, abbreviation) VALUES ('Financial Risk Manager', 'FRM');
+INSERT INTO qualifications (qualification_name, abbreviation) VALUES ('Accredited Asset Management Specialist', 'AAMS');
+INSERT INTO qualifications (qualification_name, abbreviation) VALUES ('Series 6 License', 'Series 6');
+INSERT INTO qualifications (qualification_name, abbreviation) VALUES ('Series 7 License', 'Series 7');
+INSERT INTO qualifications (qualification_name, abbreviation) VALUES ('Series 65 License', 'Series 65');
+INSERT INTO qualifications (qualification_name, abbreviation) VALUES ('Series 66 License', 'Series 66');
+INSERT INTO qualifications (qualification_name, abbreviation) VALUES ('Certified Trust and Fiduciary Advisor', 'CTFA');
+INSERT INTO qualifications (qualification_name, abbreviation) VALUES ('Accredited Investment Fiduciary', 'AIF');
+INSERT INTO qualifications (qualification_name, abbreviation) VALUES ('Retirement Income Certified Professional', 'RICP');
+INSERT INTO qualifications (qualification_name, abbreviation) VALUES ('Certified Retirement Counselor', 'CRC');
 
 
 CREATE TABLE myadvisor.advisor_qualifications (
@@ -181,7 +136,7 @@ CREATE TABLE myadvisor.investor_service (
 
 -- Appointments table
 CREATE TABLE myadvisor.appointments (
-    appointment_id INT PRIMARY KEY DEFAULT nextval('myadvisor.appointment_id_seq'),
+    appointment_id SERIAL PRIMARY KEY,
     user_id INT REFERENCES myadvisor.user_configs(user_id) ON DELETE CASCADE,
     advisor_id INT REFERENCES myadvisor.advisors(advisor_id) ON DELETE CASCADE,
     service_id INT REFERENCES myadvisor.service_types(service_id) ON DELETE CASCADE,

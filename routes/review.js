@@ -96,4 +96,32 @@ router.post('/filter', passport.authenticate('jwt', { session: false }), filterR
     }
 });
 
+
+
+
+router.get('/latest-reviews', async (req, res) => {
+
+    try {
+        const { limit = 10 } = req.query;
+
+        if (limit > 100) return res.status(400).json({ error: 'Limit must be less than 100' });
+
+        const reviews = await Review.findAll({
+            include: [
+                { model: Advisor, attributes: ['advisor_id', 'display_name', 'img_url'], required: true },
+                {
+                    model: User, attributes: ['user_id'],
+                    include: [{ model: Profile, attributes: ['first_name'], required: true }],
+                    required: true
+                },],
+            order: [['rating', 'DESC'], ['created_at', 'DESC']],
+            limit: parseInt(limit),
+        });
+
+        res.json(reviews);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 module.exports = router;
