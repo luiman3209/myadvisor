@@ -5,65 +5,6 @@ const { ServiceType, InvestorService } = require('../models/models');
 
 const router = express.Router();
 
-/**
- * @swagger
- * /investor:
- *   put:
- *     summary: Create or update an investor profile
- *     tags:
- *       - Investor
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               user_id:
- *                 type: integer
- *                 example: 1
- *               net_worth:
- *                 type: string
- *                 example: "100000-199999"
- *               income_range:
- *                 type: string
- *                 example: "75000-99999"
- *               geo_preferences:
- *                 type: string
- *                 example: "North America"
- *               selected_service_types:
- *                 type: array
- *                 items:
- *                   type: integer
- *                 example: [1, 2, 3]
- *     responses:
- *       200:
- *         description: Investor profile created or updated successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                 investor:
- *                   type: object
- *                   properties:
- *                     investor_id:
- *                       type: integer
- *                     user_id:
- *                       type: integer
- *                     net_worth:
- *                       type: string
- *                     income_range:
- *                       type: string
- *                     geo_preferences:
- *                       type: string
- *       400:
- *         description: Invalid input data
- *       500:
- *         description: Server error
- */
 
 router.put('/', passport.authenticate('jwt', { session: false }), async (req, res) => {
 
@@ -116,57 +57,7 @@ router.put('/', passport.authenticate('jwt', { session: false }), async (req, re
     }
 });
 
-/**
- * @swagger
- * /investor:
- *   get:
- *     summary: Get detailed investor profile
- *     tags:
- *       - Investor
- *     responses:
- *       200:
- *         description: Detailed investor profile
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 investor:
- *                   type: object
- *                   properties:
- *                     investor_id:
- *                       type: integer
- *                       example: 1
- *                     user_id:
- *                       type: integer
- *                       example: 1
- *                     net_worth:
- *                       type: string
- *                       example: "100000-199999"
- *                     income_range:
- *                       type: string
- *                       example: "75000-99999"
- *                     geo_preferences:
- *                       type: string
- *                       example: "North America"
- *                 serviceTypes:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       service_id:
- *                         type: integer
- *                         example: 1
- *                       service_type_name:
- *                         type: string
- *                         example: "Financial Planning"
- *                       service_type_code:
- *                         type: string
- *                         example: "FP"
- *                       is_active:
- *                         type: string
- *                         example: "Y"
- */
+
 router.get('/', passport.authenticate('jwt', { session: false }), async (req, res) => {
     try {
         const investor = await Investor.findOne({

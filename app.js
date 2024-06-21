@@ -14,6 +14,8 @@ const serviceRoutes = require('./routes/service');
 const qualificationRoutes = require('./routes/qualification');
 const helmet = require('helmet');
 
+const apiLimiter = require('./utils/rateLimiter');
+
 const setupSwagger = require('./swagger');
 
 const cors = require('cors');
@@ -41,6 +43,8 @@ cron.schedule(cronExpr, () => {
 app.use(helmet());
 app.use(bodyParser.json());
 app.use(passport.initialize());
+
+app.use('/api/', apiLimiter);
 
 app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
