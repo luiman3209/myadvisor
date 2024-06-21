@@ -1,9 +1,11 @@
 {
-  "development": {
-    "dialect": "sqlite",
-    "storage": ":memory:",
-    "logging": false
-  },
+  "use_env_variable": "DATABASE_URL_LOCAL",
+    "dialect": "postgres",
+    "timezone": "UTC",
+    "dialectOptions": {},
+    "define": {
+      "schema": "myadvisor"
+    },
   "test": {
     "dialect": "sqlite",
     "storage": ":memory:",
@@ -12,6 +14,7 @@
   "production": {
     "use_env_variable": "DATABASE_URL",
     "dialect": "postgres",
+    "timezone": "UTC",
     "dialectOptions": {
       "ssl": {
         "require": true,
