@@ -25,7 +25,6 @@ const Investor = require('./investor')(sequelize);
 const Appointment = require('./appointment')(sequelize);
 const Review = require('./review')(sequelize);
 const Message = require('./message')(sequelize);
-const Payment = require('./payment')(sequelize);
 const ServiceType = require('./service_type')(sequelize);
 const AdvisorService = require('./advisor_service')(sequelize);
 const InvestorService = require('./investor_service')(sequelize);
@@ -59,12 +58,6 @@ User.hasMany(Message, { foreignKey: 'sender_id' });
 User.hasMany(Message, { foreignKey: 'receiver_id' });
 Message.belongsTo(User, { as: 'Sender', foreignKey: 'sender_id' });
 Message.belongsTo(User, { as: 'Receiver', foreignKey: 'receiver_id' });
-
-User.hasMany(Payment, { foreignKey: 'user_id' });
-Payment.belongsTo(User, { foreignKey: 'user_id' });
-
-Appointment.hasMany(Payment, { foreignKey: 'appointment_id' });
-Payment.belongsTo(Appointment, { foreignKey: 'appointment_id' });
 
 Advisor.belongsToMany(ServiceType, { through: AdvisorService, foreignKey: 'advisor_id' });
 ServiceType.belongsToMany(Advisor, { through: AdvisorService, foreignKey: 'service_id' });
@@ -174,7 +167,6 @@ module.exports = {
     Appointment,
     Review,
     Message,
-    Payment,
     ServiceType,
     AdvisorService,
     InvestorService,

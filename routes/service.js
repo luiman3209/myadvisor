@@ -1,13 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { ServiceType, AdvisorService, InvestorService } = require('../models/models');
-
-/**
- * @swagger
- * tags:
- *   name: Service
- *   description: Service type management
- */
+const { ServiceType } = require('../models/models');
 
 /**
  * @swagger
@@ -100,63 +93,6 @@ router.get('/:id', async (req, res) => {
         }
     } catch (error) {
         res.status(500).json({ error: 'An error occurred while fetching the service type.' });
-    }
-});
-
-/**
- * @swagger
- * /advisor/{advisor_id}:
- *   get:
- *     summary: Get service types by advisor ID
- *     tags: [Service]
- *     description: Retrieve service types associated with a specific advisor by the advisor's ID.
- *     parameters:
- *       - in: path
- *         name: advisor_id
- *         required: true
- *         schema:
- *           type: integer
- *         description: The ID of the advisor.
- *     responses:
- *       200:
- *         description: A list of service types associated with the advisor.
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 type: object
- *                 properties:
- *                   service_id:
- *                     type: integer
- *                   service_type_name:
- *                     type: string
- *                   is_active:
- *                     type: string
- *                   created_at:
- *                     type: string
- *                     format: date-time
- *                   updated_at:
- *                     type: string
- *                     format: date-time
- *       404:
- *         description: Advisor not found or no associated service types.
- *       500:
- *         description: An error occurred while fetching the service types.
- */
-router.get('/advisor/:advisor_id', async (req, res) => {
-    const { advisor_id } = req.params;
-    try {
-        const advisorServices = await AdvisorService.findAll({ where: { advisor_id } });
-        if (advisorServices.length > 0) {
-            const serviceIds = advisorServices.map(as => as.service_id);
-            const serviceTypes = await ServiceType.findAll({ where: { service_id: serviceIds } });
-            res.json(serviceTypes);
-        } else {
-            res.status(404).json({ error: 'No service types found for the given advisor ID.' });
-        }
-    } catch (error) {
-        res.status(500).json({ error: 'An error occurred while fetching the service types.' });
     }
 });
 
