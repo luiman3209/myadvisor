@@ -3,24 +3,28 @@ const jwt = require('jsonwebtoken');
 const { User, Profile } = require('../models/models');
 const router = express.Router();
 const passport = require('passport');
-
+const xss = require('xss');
 
 router.post('/register', async (req, res) => {
     try {
         const { email, password, role } = req.body;
 
+        // Sanitize input
+        const sanitizedEmail = xss(email);
+        const sanitizedPassword = xss(password);
+        const sanitizedRole = xss(role);
+
         // Check if the email is already in use
-        if (await User.findOne({ where: { email } })) {
+        if (await User.findOne({ where: { email: sanitizedEmail } })) {
             return res.status(400).json({ error: 'Email already in use' });
         }
 
-        if (role !== 'investor' && role !== 'advisor' && role !== 'admin') {
+        if (sanitizedRole !== 'investor' && sanitizedRole !== 'advisor' && sanitizedRole !== 'admin') {
             return res.status(400).json({ error: 'Invalid role' });
         }
 
         // Create the user with hashed password
-        const user = await User.create({ email, password_hash: password, role });
-
+        const user = await User.create({ email: sanitizedEmail, password_hash: sanitizedPassword, role: sanitizedRole });
 
         res.json({ message: 'User registered successfully', user });
     } catch (error) {
@@ -28,14 +32,18 @@ router.post('/register', async (req, res) => {
     }
 });
 
-
 router.post('/login', async (req, res) => {
     try {
         const { email, password } = req.body;
-        const user = await User.findOne({ where: { email } });
+
+        // Sanitize input
+        const sanitizedEmail = xss(email);
+        const sanitizedPassword = xss(password);
+
+        const user = await User.findOne({ where: { email: sanitizedEmail } });
 
         // Check if user exists and if the password matches
-        if (!user || ! await user.validPassword(password)) {
+        if (!user || ! await user.validPassword(sanitizedPassword)) {
             return res.status(400).json({ message: 'Invalid email or password' });
         }
 
@@ -52,7 +60,11 @@ router.post('/login', async (req, res) => {
 router.post('/check-email', async (req, res) => {
     try {
         const { email } = req.body;
-        const user = await User.findOne({ where: { email } });
+
+        // Sanitize input
+        const sanitizedEmail = xss(email);
+
+        const user = await User.findOne({ where: { email: sanitizedEmail } });
 
         res.json({ available: !user });
     } catch (error) {
@@ -63,7 +75,11 @@ router.post('/check-email', async (req, res) => {
 router.post('/check-phone', async (req, res) => {
     try {
         const { phone_number } = req.body;
-        const user = await Profile.findOne({ where: { phone_number } });
+
+        // Sanitize input
+        const sanitizedPhoneNumber = xss(phone_number);
+
+        const user = await Profile.findOne({ where: { phone_number: sanitizedPhoneNumber } });
 
         res.json({ available: !user });
     } catch (error) {
@@ -74,23 +90,27 @@ router.post('/check-phone', async (req, res) => {
 router.put('/user/update', passport.authenticate('jwt', { session: false }), async (req, res) => {
     try {
         const { email, password } = req.body;
+
+        // Sanitize input
+        const sanitizedEmail = email ? xss(email) : '';
+        const sanitizedPassword = password ? xss(password) : '';
+
         const user = await User.findOne({ where: { user_id: req.user.id } });
 
         // Check if user exists and if the password matches
-        if (!user || ! await user.validPassword(password)) {
+        if (!user || ! await user.validPassword(sanitizedPassword)) {
             return res.status(400).json({ message: 'Invalid email or password' });
         }
 
-
-        if (email) {
-            await User.update({ email }, { where: { user_id: req.user.id } });
+        if (sanitizedEmail) {
+            await User.update({ email: sanitizedEmail }, { where: { user_id: req.user.id } });
         }
 
-        if (password) {
-            await User.update({ password_hash: password }, { where: { user_id: req.user.id } });
+        if (sanitizedPassword) {
+            await User.update({ password_hash: sanitizedPassword }, { where: { user_id: req.user.id } });
         }
 
-        res.json({ message: 'User updated successfully', token });
+        res.json({ message: 'User updated successfully' });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

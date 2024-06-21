@@ -1,11 +1,24 @@
 const express = require('express');
 const { Review, Advisor, Appointment, AdvisorService } = require('../models/models');
 const router = express.Router();
-const { Op, where } = require('sequelize');
+const { Op } = require('sequelize');
 const { retrieveFreeWindows } = require('../utils/bookingUtils');
+const { validationResult, query } = require('express-validator');
 
-router.get('/advisors', async (req, res) => {
+// Validation middleware
+const getAdvisorsValidationRules = [
+    query('operating_country_code').optional().isLength({ min: 1 }).trim(),
+    query('service_id').optional().isInt().toInt(),
+    query('page').optional().isInt({ min: 1 }).toInt(),
+    query('limit').optional().isInt({ min: 1, max: 50 }).toInt(),
+];
+
+router.get('/advisors', getAdvisorsValidationRules, async (req, res) => {
     try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
 
         const { operating_country_code, service_id, page = 1, limit = 10 } = req.query;
 
@@ -16,25 +29,18 @@ router.get('/advisors', async (req, res) => {
         const whereClause = {};
 
         if (service_id) {
-
-            const advisor_ses = await AdvisorService.findAll({
+            const advisorServices = await AdvisorService.findAll({
                 attributes: ['advisor_id'],
-                where: {
-                    service_id: service_id
-                }
+                where: { service_id: service_id }
             });
 
-            const advisor_ids = advisor_ses.map(advisor_se => advisor_se.advisor_id);
+            const advisorIds = advisorServices.map(advisorService => advisorService.advisor_id);
 
-            whereClause.advisor_id = {
-                [Op.in]: advisor_ids
-            };
+            whereClause.advisor_id = { [Op.in]: advisorIds };
 
             if (operating_country_code) {
                 whereClause.operating_country_code = operating_country_code;
             }
-
-
         } else if (operating_country_code) {
             whereClause.operating_country_code = operating_country_code;
         }
@@ -43,7 +49,8 @@ router.get('/advisors', async (req, res) => {
 
         const { count, rows } = await Advisor.findAndCountAll({
             where: whereClause,
-            attributes: ['advisor_id',
+            attributes: [
+                'advisor_id',
                 'operating_country_code',
                 'contact_information',
                 'display_name',
@@ -61,10 +68,7 @@ router.get('/advisors', async (req, res) => {
 
         let advisorDtos = [];
 
-        // Include free windows for each advisor
         for (const advisor of rows) {
-
-            // Calculate available slots for the next week
             const start = new Date();
             start.setHours(0, 0, 0, 0);
             const end = new Date();
@@ -74,21 +78,15 @@ router.get('/advisors', async (req, res) => {
             const appointments = await Appointment.findAll({
                 where: {
                     advisor_id: advisor.advisor_id,
-                    start_time: {
-                        [Op.between]: [start, end],
-                    },
+                    start_time: { [Op.between]: [start, end] },
                 },
                 order: [['start_time', 'ASC']],
             });
 
             const freeWindows = retrieveFreeWindows(advisor, appointments, start, end);
 
-
-            // Calculate average rating
             const reviews = await Review.findAll({
-                where: {
-                    advisor_id: advisor.advisor_id,
-                },
+                where: { advisor_id: advisor.advisor_id },
                 attributes: ['rating'],
             });
 
@@ -99,19 +97,16 @@ router.get('/advisors', async (req, res) => {
 
             const averageRating = reviews.length > 0 ? totalRating / reviews.length : 0;
 
-            // Load service ids
-            const advisor_services = await AdvisorService.findAll({
-                where: {
-                    advisor_id: advisor.advisor_id
-                },
+            const advisorServices = await AdvisorService.findAll({
+                where: { advisor_id: advisor.advisor_id },
                 attributes: ['service_id']
             });
 
-            const advisor_service_ids = advisor_services.map(service => service.service_id);
+            const advisorServiceIds = advisorServices.map(service => service.service_id);
 
             advisorDtos.push({
                 advisor_id: advisor.advisor_id,
-                advisor_services: advisor_service_ids,
+                advisor_services: advisorServiceIds,
                 contact_information: advisor.contact_information,
                 display_name: advisor.display_name,
                 img_url: advisor.img_url,
@@ -131,12 +126,9 @@ router.get('/advisors', async (req, res) => {
             advisors: advisorDtos
         });
     } catch (error) {
+        console.error(error);
         res.status(500).json({ error: error.message });
-        console.log(error);
     }
 });
-
-
-
 
 module.exports = router;

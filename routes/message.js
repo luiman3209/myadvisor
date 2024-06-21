@@ -2,19 +2,30 @@ const express = require('express');
 const passport = require('passport');
 const { Message, User, Advisor } = require('../models/models');
 const { Op } = require('sequelize');
-
 const router = express.Router();
+const xss = require('xss');
+const { body, validationResult } = require('express-validator');
 
+// Validation middleware
+const messageValidationRules = [
+    body('receiver_id').notEmpty().isInt(),
+    body('content').trim().notEmpty().escape(),
+];
 
-router.post('/', passport.authenticate('jwt', { session: false }), async (req, res) => {
+router.post('/', passport.authenticate('jwt', { session: false }), messageValidationRules, async (req, res) => {
     try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+
         const { receiver_id, content } = req.body;
         const sender_id = req.user.id;
 
         const message = await Message.create({
             sender_id,
             receiver_id,
-            content,
+            content: xss(content), // Sanitize content
         });
 
         res.json({ message: 'Message sent successfully', messageValue: message });
