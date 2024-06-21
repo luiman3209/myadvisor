@@ -219,15 +219,3 @@ CREATE TABLE myadvisor.messages (
 );
 
 
-
--- Payments table (optional)
-CREATE TABLE myadvisor.payments (
-    payment_id INT PRIMARY KEY DEFAULT nextval('myadvisor.payment_id_seq'),
-    user_id INT REFERENCES myadvisor.user_configs(user_id) ON DELETE CASCADE,
-    appointment_id INT REFERENCES myadvisor.appointments(appointment_id) ON DELETE CASCADE,
-    amount DECIMAL(10, 2) NOT NULL,
-    payment_method VARCHAR(50),
-    payment_status VARCHAR(50) CHECK (payment_status IN ('pending', 'completed', 'failed')) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
