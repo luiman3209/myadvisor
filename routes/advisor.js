@@ -164,11 +164,11 @@ router.get('/:advisor_id',
             await advisor.save();
 
             const profileReviews = await Review.findAll({
-                attributes: ['review', 'rating', 'created_at'],
+                attributes: ['review_id', 'review', 'rating', 'created_at'],
                 where: { advisor_id },
                 include: [
                     {
-                        model: User, attributes: [],
+                        model: User, attributes: ['user_id'],
                         include: [{ model: Profile, attributes: ['first_name'] }],
                         required: true
                     },
