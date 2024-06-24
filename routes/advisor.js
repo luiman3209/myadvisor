@@ -26,12 +26,13 @@ router.put('/',
         body('end_shift_2').trim().escape().optional({ checkFalsy: true }),
         body('selected_service_ids').isArray(),
         body('operating_country_code').trim().escape(),
-        body('office_address').trim().escape(),
+        body('office_address').trim(),
         body('operating_city_code').trim().escape(),
         body('display_name').trim().escape()
     ],
     handleValidationErrors,
     async (req, res) => {
+
         const {
             qualifications,
             contact_information,
@@ -55,13 +56,15 @@ router.put('/',
                 advisor.contact_information = xss(contact_information);
                 advisor.start_shift_1 = xss(start_shift_1);
                 advisor.end_shift_1 = xss(end_shift_1);
-                advisor.start_shift_2 = xss(start_shift_2);
-                advisor.end_shift_2 = xss(end_shift_2);
+                advisor.start_shift_2 = start_shift_2 ? xss(start_shift_2) : null;
+                advisor.end_shift_2 = end_shift_2 ? xss(end_shift_2) : null;
                 advisor.operating_country_code = xss(operating_country_code);
                 advisor.office_address = xss(office_address);
                 advisor.operating_city_code = xss(operating_city_code);
                 advisor.display_name = xss(display_name);
                 advisor.updated_at = new Date();
+
+                await advisor.save();
             } else {
                 // Create new advisor
                 advisor = await Advisor.create({
@@ -69,8 +72,8 @@ router.put('/',
                     contact_information: xss(contact_information),
                     start_shift_1: xss(start_shift_1),
                     end_shift_1: xss(end_shift_1),
-                    start_shift_2: xss(start_shift_2),
-                    end_shift_2: xss(end_shift_2),
+                    start_shift_2: start_shift_2 ? xss(start_shift_2) : null,
+                    end_shift_2: end_shift_2 ? xss(end_shift_2) : null,
                     operating_country_code: xss(operating_country_code),
                     office_address: xss(office_address),
                     operating_city_code: xss(operating_city_code),
@@ -78,7 +81,7 @@ router.put('/',
                 });
             }
 
-            await advisor.save();
+
 
             // Update advisor qualifications
             if (Array.isArray(qualifications)) {
@@ -132,8 +135,8 @@ router.get('/',
             res.json({
                 advisor,
                 profileReviews,
-                serviceTypes: advisorServices.map(st => xss(st.service_id.toString())),
-                qualifications: advisorQualifications.map(aq => xss(aq.qualification_id.toString())),
+                serviceTypes: advisorServices.map(st => st.service_id),
+                qualifications: advisorQualifications.map(aq => aq.qualification_id),
                 userProfile,
             });
         } catch (error) {

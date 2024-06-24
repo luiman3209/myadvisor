@@ -10,7 +10,7 @@ const profileValidationRules = [
     body('first_name').notEmpty().trim().escape(),
     body('last_name').notEmpty().trim().escape(),
     body('phone_number').notEmpty().trim().isMobilePhone().escape(),
-    body('address').optional({ nullable: true }).trim().escape(),
+    body('address').optional({ nullable: true }).trim(),
 ];
 
 router.get('/', passport.authenticate('jwt', { session: false }), async (req, res) => {

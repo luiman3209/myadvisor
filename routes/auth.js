@@ -6,6 +6,7 @@ const passport = require('passport');
 const xss = require('xss');
 
 router.post('/register', async (req, res) => {
+    res.status(400).json({ message: 'Service disabled for demo' });
     try {
         const { email, password, role } = req.body;
 
@@ -89,6 +90,9 @@ router.post('/check-phone', async (req, res) => {
 
 router.put('/user/update', passport.authenticate('jwt', { session: false }), async (req, res) => {
     try {
+
+        res.status(400).json({ message: 'Service disabled for demo' });
+
         const { email, password } = req.body;
 
         // Sanitize input

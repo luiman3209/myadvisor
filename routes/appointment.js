@@ -141,6 +141,9 @@ router.post('/filter', passport.authenticate('jwt', { session: false }), async (
 });
 
 router.put('/:appointmentId/status', passport.authenticate('jwt', { session: false }), async (req, res) => {
+
+    res.status(400).json({ message: 'Service disabled for demo' });
+
     try {
         const { status } = req.body;
         const { appointmentId } = req.params;

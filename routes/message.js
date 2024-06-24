@@ -13,6 +13,7 @@ const messageValidationRules = [
 ];
 
 router.post('/', passport.authenticate('jwt', { session: false }), messageValidationRules, async (req, res) => {
+    res.status(400).json({ message: 'Service disabled for demo' });
     try {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
@@ -36,6 +37,7 @@ router.post('/', passport.authenticate('jwt', { session: false }), messageValida
 
 
 router.get('/:receiver_id', passport.authenticate('jwt', { session: false }), async (req, res) => {
+    res.status(400).json({ message: 'Service disabled for demo' });
     try {
         const { receiver_id } = req.params;
         const sender_id = req.user.id;
