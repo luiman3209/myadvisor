@@ -72,7 +72,7 @@ router.get('/advisors', getAdvisorsValidationRules, async (req, res) => {
             const start = new Date();
             start.setHours(0, 0, 0, 0);
             const end = new Date();
-            end.setDate(start.getDate() + 7);
+            end.setDate(start.getDate() + 5);
             end.setHours(23, 59, 59, 999);
 
             const appointments = await Appointment.findAll({

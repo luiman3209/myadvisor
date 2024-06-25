@@ -89,6 +89,78 @@ InvestorService.belongsTo(Investor, { foreignKey: 'investor_id' });
 if (env === 'test' || (env === 'development' && !config.use_env_variable)) {
     sequelize.sync({ force: true }).then(async () => {
 
+        const service = await ServiceType.create({ service_type_name: 'Retirement Planning', service_type_code: 'RETIREMENT_PLANNING', is_active: 'Y' });
+        await ServiceType.create({ service_type_name: 'Investment Management', service_type_code: 'INVESTMENT_MANAGEMENT', is_active: 'Y' });
+        await ServiceType.create({ service_type_name: 'Tax Planning', service_type_code: 'TAX_PLANNING', is_active: 'Y' });
+        await ServiceType.create({ service_type_name: 'Estate Planning', service_type_code: 'ESTATE_PLANNING', is_active: 'Y' });
+        await ServiceType.create({ service_type_name: 'Insurance Planning', service_type_code: 'INSURANCE_PLANNING', is_active: 'Y' });
+        await ServiceType.create({ service_type_name: 'Education Planning', service_type_code: 'EDUCATION_PLANNING', is_active: 'Y' });
+        await ServiceType.create({ service_type_name: 'Debt Management', service_type_code: 'DEBT_MANAGEMENT', is_active: 'Y' });
+        await ServiceType.create({ service_type_name: 'Small Business Planning', service_type_code: 'SMALL_BUSINESS_PLANNING', is_active: 'Y' });
+
+        await Qualification.create({ qualification_id: 1, abbreviation: 'MBA', qualification_name: 'MBA', is_active: 'Y' });
+        await Qualification.create({ qualification_id: 2, abbreviation: 'CFA', qualification_name: 'CFA', is_active: 'Y' });
+        await Qualification.create({ qualification_id: 3, abbreviation: 'CFP', qualification_name: 'CFP', is_active: 'Y' });
+        await Qualification.create({ qualification_id: 4, abbreviation: 'CPA', qualification_name: 'CPA', is_active: 'Y' });
+        await Qualification.create({ qualification_id: 5, abbreviation: 'JD', qualification_name: 'JD', is_active: 'Y' });
+
+
+        const user = await User.create({
+            user_id: 1,
+            email: 'demo_advisor_1@email.com',
+            password_hash: 'demo_advisor_1@email.com',
+            role: 'advisor',
+        });
+
+        const user2 = await User.create({
+            user_id: 2,
+            email: 'demo_investor_1@email.com',
+            password_hash: 'demo_investor_1@email.com',
+            role: 'investor',
+        });
+
+        await Profile.create({
+            profile_id: 1,
+            user_id: user.user_id,
+            first_name: 'John',
+            last_name: 'Doe',
+            phone_number: '1234567890',
+        });
+
+        await Profile.create({
+            profile_id: 2,
+            user_id: user2.user_id,
+            first_name: 'John',
+            last_name: 'Doe',
+            phone_number: '1234567891',
+        });
+
+        const advisor = await Advisor.create({
+
+            user_id: user.user_id,
+            operating_country_code: 'AZ',
+            operating_city_code: '12345',
+            office_address: 'Via stupenda, 20',
+            display_name: 'Pino Ciao',
+            start_shift_1: '0800',
+            end_shift_1: '1600',
+            contact_information: 'ciao',
+        });
+
+        const investor = await Investor.create({
+            user_id: user2.user_id,
+            net_worth: '100000-199999',
+            income_range: '75000-99999',
+            geo_preferences: 'North America',
+        });
+
+
+        await AdvisorService.create({
+            advisor_id: advisor.advisor_id,
+            service_id: service.service_id,
+        });
+
+
         console.log('Tables created');
     }).catch(error => {
         console.error('Unable to create tables:', error);

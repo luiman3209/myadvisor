@@ -6,6 +6,9 @@ const { body, param, validationResult } = require('express-validator');
 const xss = require('xss');
 const router = express.Router();
 
+const { Op } = require('sequelize');
+const { retrieveFreeWindows } = require('../utils/bookingUtils');
+
 // Middleware to check validation results and handle errors
 const handleValidationErrors = (req, res, next) => {
     const errors = validationResult(req);
@@ -192,9 +195,27 @@ router.get('/:advisor_id',
             const qualificationIds = advisorQualifications.map(aq => aq.qualification_id);
             const qualifications = await Qualification.findAll({ where: { qualification_id: qualificationIds } });
 
+            // Retrieve free windows
+            const start = new Date();
+            start.setHours(0, 0, 0, 0);
+            const end = new Date();
+            end.setDate(start.getDate() + 5);
+            end.setHours(23, 59, 59, 999);
+
+            const appointments = await Appointment.findAll({
+                where: {
+                    advisor_id: advisor.advisor_id,
+                    start_time: { [Op.between]: [start, end] },
+                },
+                order: [['start_time', 'ASC']],
+            });
+
+            const freeWindows = retrieveFreeWindows(advisor, appointments, start, end);
+
             res.json({
                 advisor: advisor,
                 profileReviews,
+                freeWindows,
                 serviceTypes,
                 qualifications,
                 average_rating: averageRating,
@@ -202,6 +223,7 @@ router.get('/:advisor_id',
                 offices: [advisor.office_address],
             });
         } catch (error) {
+            console.log(error)
             res.status(500).json({ error: error.message });
         }
     }
