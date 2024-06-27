@@ -59,16 +59,16 @@ app.use('/api/services', serviceRoutes);
 app.use('/api/qualifications', qualificationRoutes);
 app.use('/api/reviews', reviewRoutes);
 
-//const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 4000;
 
 
 
 if (process.env.NODE_ENV !== 'test') {
   console.log('ENV: ', process.env.NODE_ENV);
   setupSwagger(app);
-  //app.listen(PORT, async () => {
-  //  console.log(`Server is running on port ${PORT}`);
-  //});
+  app.listen(PORT, async () => {
+    console.log(`Server is running on port ${PORT}`);
+  });
 
 }
 

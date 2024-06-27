@@ -151,7 +151,7 @@ CREATE TABLE myadvisor.appointments (
 
 -- Reviews table
 CREATE TABLE myadvisor.reviews (
-    review_id INT PRIMARY KEY DEFAULT nextval('review_id_seq'),
+    review_id SERIAL PRIMARY KEY,
     user_id INT REFERENCES myadvisor.user_configs(user_id) ON DELETE SET NULL,
     advisor_id INT REFERENCES myadvisor.advisors(advisor_id) ON DELETE CASCADE,
     appointment_id INT REFERENCES myadvisor.appointments(appointment_id) ON DELETE SET NULL,
@@ -164,7 +164,7 @@ CREATE TABLE myadvisor.reviews (
 
 -- Messages table
 CREATE TABLE myadvisor.messages (
-    message_id INT PRIMARY KEY DEFAULT nextval('myadvisor.message_id_seq'),
+    message_id SERIAL PRIMARY KEY,
     sender_id INT REFERENCES myadvisor.user_configs(user_id) ON DELETE CASCADE,
     receiver_id INT REFERENCES myadvisor.user_configs(user_id) ON DELETE CASCADE,
     content TEXT NOT NULL,
